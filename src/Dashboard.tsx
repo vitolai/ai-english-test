@@ -179,7 +179,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                 <>
                   <div>
                     <label className="block text-sm font-black text-slate-400 uppercase tracking-widest mb-3">Model</label>
-                    <select value={aiModel} onChange={(e) => setAiModel(e.target.value)} className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 text-slate-700 font-bold outline-none">
+                    <select value={aiModel} onChange={(e) => setAiModel(e.target.value)} className="w-full p-4 rounded-xl border-2 border-slate-100 bg-white text-blue-950 font-bold outline-none border-blue-200">
                       <option value="ollama/nemotron-3-super:cloud">ollama/nemotron-3-super:cloud</option>
                       <option value="ollama/minimax-m2.7:cloud">ollama/minimax-m2.7:cloud</option>
                       <option value="ollama/deepseek-v3.1:671b-cloud">ollama/deepseek-v3.1:671b-cloud</option>
@@ -213,7 +213,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                 <>
                   <div>
                     <label className="block text-sm font-black text-slate-400 uppercase tracking-widest mb-3">Model</label>
-                    <select value={groqModel} onChange={(e) => setGroqModel(e.target.value)} className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 text-slate-700 font-bold outline-none">
+                    <select value={groqModel} onChange={(e) => setGroqModel(e.target.value)} className="w-full p-4 rounded-xl border-2 border-slate-100 bg-white text-blue-950 font-bold outline-none border-blue-200">
                       <option value="llama-3.1-70b-versatile">Llama 3.1 70B (Fast)</option>
                       <option value="llama-3.1-8b-instant">Llama 3.1 8B (Ultra Fast)</option>
                       <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
@@ -227,7 +227,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                         Get Groq Key <Globe className="w-3 h-3" />
                       </a>
                     </div>
-                    <input type="password" value={groqApiKey} onChange={(e) => setGroqApiKey(e.target.value)} className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 font-mono outline-none" placeholder="Enter your Groq API Key" />
+                    <input type="password" value={groqApiKey} onChange={(e) => setGroqApiKey(e.target.value)} className="w-full p-4 rounded-xl border-2 border-slate-100 bg-white text-blue-950 font-mono font-bold outline-none border-blue-200 focus:ring-4 ring-blue-50 transition-all" placeholder="Enter your Groq API Key" />
                     <p className="text-xs text-slate-400 mt-2">Groq offers free tier with generous rate limits</p>
                   </div>
                 </>
