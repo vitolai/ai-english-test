@@ -192,7 +192,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                   )}
                   <div>
                     <label className="block text-sm font-black text-slate-400 uppercase tracking-widest mb-3">API Endpoint</label>
-                    <input type="text" value={aiApiUrl} onChange={(e) => setAiApiUrl(e.target.value)} className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 font-mono text-sm outline-none" placeholder="http://localhost:11434/v1/chat/completions" />
+                    <input type="text" value={aiApiUrl} onChange={(e) => setAiApiUrl(e.target.value)} className="w-full p-4 rounded-xl border-2 border-blue-200 bg-white text-blue-950 font-mono font-bold text-sm outline-none ring-blue-50 focus:ring-4 transition-all" placeholder="http://localhost:11434/v1/chat/completions" />
                   </div>
                   <div>
                     <div className="flex justify-between items-center mb-3">
