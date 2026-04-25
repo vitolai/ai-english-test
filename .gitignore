@@ -1,0 +1,8 @@
+node_modules/
+.env
+storage/sessions/
+qa_results/
+*.mp3
+.DS_Store
+dist/
+.tmp/
