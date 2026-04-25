@@ -202,7 +202,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                       </a>
                     </div>
                     <div className="relative">
-                      <input type={showApiKey ? 'text' : 'password'} value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="w-full p-4 pr-12 rounded-xl border-2 border-slate-100 bg-slate-50 font-mono outline-none" placeholder="Enter your Cloud API Key" />
+                      <input type={showApiKey ? 'text' : 'password'} value={apiKey} onChange={(e) => setApiKey(e.target.value)} className="w-full p-4 pr-12 rounded-xl border-2 border-blue-200 bg-white text-blue-950 font-mono font-bold outline-none ring-blue-50 focus:ring-4 transition-all" placeholder="Enter your Cloud API Key" />
                       <button type="button" onClick={() => setShowApiKey(!showApiKey)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
                         {showApiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>

@@ -207,7 +207,7 @@ const QuestionCard: React.FC<{
 const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
   const [currentSection, setCurrentSection] = useState<'listening' | 'reading'>('listening');
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
-  const [timeLeft, setTimeLeft] = useState((data.listeningTime || 0) + (data.readingTime || 0) || 1200);
+  const [timeLeft, setTimeLeft] = useState(data.questions.length * 0.6 * 60);
   const [isFinished, setIsFinished] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
 

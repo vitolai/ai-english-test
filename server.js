@@ -86,11 +86,12 @@ app.post('/api/generate', async (req, res) => {
                 const currentChunkSize = Math.min(20, remainingCount);
                 const startId = finalQuestions.length + 1;
 
+                
                 let part1Count = 1;
                 if (questionCount === 50) part1Count = 2;
-                if (questionCount === 100) part1Count = 3;
-                if (questionCount >= 200) part1Count = 6;
-                // Note: 10, 20, 30 questions all default to 1 photo.
+                if (questionCount >= 100) part1Count = 6;
+                // Counts 10, 20, 30 default to 1 photo.
+
 
                 let part1Instruction = '';
                 if (startId <= part1Count) {
