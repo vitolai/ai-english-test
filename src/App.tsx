@@ -48,18 +48,19 @@ const App: React.FC = () => {
         setSessionId(null);
         setError(null);
         
-        // FINAL FRONTEND GUARD: Block network request if API Key is empty or too short
-        if (config.aiSource !== 'ollama') {
-            if (!config.apiKey.trim()) {
-                setError("No API Key provided. Please enter your API Key in Settings.");
-                setLoading(false);
-                return;
-            }
-            if (config.apiKey.trim().length < 20) {
-                setError("Invalid API Key: Key is too short to be valid. Please check your credentials in Settings.");
-                setLoading(false);
-                return;
-            }
+        // PROVIDER-SPECIFIC VALIDATION
+        const isOllamaLocal = config.apiUrl.includes('localhost') || config.apiUrl.includes('127.0.0.1') || config.apiUrl === '';
+        
+        if (!config.apiKey.trim()) {
+            setError("No API Key provided. Please enter your API Key in Settings.");
+            setLoading(false);
+            return;
+        }
+
+        if (!isOllamaLocal && config.apiKey.trim().length < 20) {
+            setError("Invalid API Key for Cloud Provider: Key is too short. Please check your credentials in Settings.");
+            setLoading(false);
+            return;
         }
 
         setStatus({ phase: 'starting', progress: 0, message: 'Ingesting knowledge source...' });
