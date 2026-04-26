@@ -12,9 +12,9 @@ test('Pressure Test - 200 Questions (General User)', async ({ page }) => {
   await page.getByText('200', { exact: true }).click();
   await page.getByText('START EXAM').click();
   
-  // 3. Verify Timer - 200 * 0.6 = 30:00
+  // 3. Verify Timer - 200 * 0.6 = 120:00
   const timer = page.locator('div').filter({ has: page.locator('.lucide-clock') }).last();
-  await expect(timer).toContainText('30:00');
+  await expect(timer).toContainText('120:00');
   
   // 4. Check UI Responsiveness (Scroll to bottom)
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
