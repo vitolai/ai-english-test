@@ -82,8 +82,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
       provider
     };
 
-    setIsSettingsOpen(false);
-    onStart(count, source, source === 'web' ? webUrl : pdfFile, config, maxStorage);
+    setIsSettingsOpen(false); setTimeout(() => {
+    onStart(count, source, source === 'web' ? webUrl : pdfFile, config, maxStorage); }, 100);
   };
 
   return (
@@ -150,7 +150,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                 <Settings className="w-6 h-6 text-blue-600" />
                 AI Configuration
               </h2>
-              <button onClick={() => setIsSettingsOpen(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-colors">
+              <button data-testid="close-settings" onClick={() => setIsSettingsOpen(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-colors">
                 <X className="w-6 h-6" />
               </button>
             </div>

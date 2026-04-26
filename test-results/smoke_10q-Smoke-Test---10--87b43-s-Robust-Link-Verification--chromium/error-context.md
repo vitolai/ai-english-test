@@ -6,22 +6,24 @@
 
 # Test info
 
-- Name: pressure_test_100.spec.ts >> Pressure Test - 100 Questions (General User)
-- Location: tests/pressure_test_100.spec.ts:3:1
+- Name: smoke_10q.spec.ts >> Smoke Test - 10 Questions (Robust Link Verification)
+- Location: tests/smoke_10q.spec.ts:3:1
 
 # Error details
 
 ```
 Error: expect(locator).toContainText(expected) failed
 
-Locator: locator('div').filter({ has: locator('.lucide-clock') }).last()
-Expected substring: "30:00"
-Timeout: 5000ms
-Error: element(s) not found
+Locator: locator('h2')
+Expected substring: "Listening"
+Received string:    "AI Configuration"
+Timeout: 60000ms
 
 Call log:
-  - Expect "toContainText" with timeout 5000ms
-  - waiting for locator('div').filter({ has: locator('.lucide-clock') }).last()
+  - Expect "toContainText" with timeout 60000ms
+  - waiting for locator('h2')
+    63 × locator resolved to <h2 class="text-2xl font-black text-slate-800 flex items-center gap-3">…</h2>
+       - unexpected value "AI Configuration"
 
 ```
 
@@ -108,31 +110,31 @@ Call log:
 ```ts
   1  | import { test, expect } from '@playwright/test';
   2  | 
-  3  | test('Pressure Test - 100 Questions (General User)', async ({ page }) => {
-  4  |   await page.goto('http://localhost:3000');
-  5  |   
-  6  |   // 1. Configure Settings
-  7  |   await page.locator('.lucide-settings').first().click();
-  8  |   await page.getByPlaceholder('Enter your Groq (Recommended - Fast ⚡) API Key').fill('gsk_test_audit');
-  9  |   await page.locator('button').filter({ has: page.locator('.lucide-x') }).click();
+  3  | test('Smoke Test - 10 Questions (Robust Link Verification)', async ({ page }) => {
+  4  |   page.on("console", msg => console.log("BROWSER LOG:", msg.text()));
+  5  |   await page.goto('http://localhost:3000');
+  6  |   
+  7  |   // 1. Configure Settings with New Data Test ID
+  8  |   await page.locator('.lucide-settings').first().click();
+  9  |   await page.getByPlaceholder('Enter your Groq (Recommended - Fast ⚡) API Key').fill('gsk_test_audit');
   10 |   
-  11 |   // 2. Select 100 Questions
-  12 |   await page.getByText('100', { exact: true }).click();
-  13 |   await page.getByText('START EXAM').click();
+  11 |   // Robust close using data-testid
+  12 |   await page.getByTestId('close-settings').click();
+  13 |   await expect(page.getByText('AI Configuration')).toBeHidden();
   14 |   
-  15 |   // 3. Verify Timer - 100 * 0.6 = 30:00
-  16 |   const timer = page.locator('div').filter({ has: page.locator('.lucide-clock') }).last();
-> 17 |   await expect(timer).toContainText('30:00');
-     |                       ^ Error: expect(locator).toContainText(expected) failed
+  15 |   // 2. Select 10 Questions
+  16 |   await page.getByText('10', { exact: true }).click();
+  17 |   await page.getByText('START EXAM').click();
   18 |   
-  19 |   // 4. Check UI Responsiveness (Scroll to bottom)
-  20 |   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  21 |   
-  22 |   // 5. Verify a sample question exists (e.g., Q25)
-  23 |   await expect(page.getByText('Question 25')).toBeVisible();
-  24 |   
-  25 |   await page.screenshot({ path: 'pressure_test_100_result.png', fullPage: true });
-  26 |   console.log('SUCCESS: 100-Question Pressure Test Verified.');
+  19 |   // 3. Verify Timer - 10 * 0.6 = 6:00
+  20 |   const timer = page.locator('div').filter({ has: page.locator('.lucide-clock') }).last();
+> 21 |   await expect(page.locator("h2")).toContainText("Listening", { timeout: 60000 });
+     |                                    ^ Error: expect(locator).toContainText(expected) failed
+  22 |   await expect(timer).toContainText('6:00', { timeout: 30000 });
+  23 |   
+  24 |   // 4. Verification Screenshot
+  25 |   await page.screenshot({ path: 'smoke_10q_success.png', fullPage: true });
+  26 |   console.log('SUCCESS: 10-Question Smoke Test Passed.');
   27 | });
   28 | 
 ```

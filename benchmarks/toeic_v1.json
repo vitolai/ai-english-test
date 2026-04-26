@@ -1,0 +1,22 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "type": "listening",
+      "part": 1,
+      "question": "What is the woman doing?",
+      "options": ["A) Reading a book", "B) Writing a letter", "C) Opening a box", "D) Closing a door"],
+      "answer": "C",
+      "image": "https://example.com/toeic1.jpg",
+      "audio": "https://example.com/toeic1.mp3"
+    },
+    {
+      "id": 2,
+      "type": "reading",
+      "part": 5,
+      "question": "The manager requested that all employees ___ the meeting.",
+      "options": ["A) attend", "B) attends", "C) attending", "D) attended"],
+      "answer": "A"
+    }
+  ]
+}

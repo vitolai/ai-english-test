@@ -6,17 +6,20 @@ test('Pressure Test - 100 Questions (General User)', async ({ page }) => {
   // 1. Configure Settings
   await page.locator('.lucide-settings').first().click();
   await page.getByPlaceholder('Enter your Groq (Recommended - Fast ⚡) API Key').fill('gsk_test_audit');
-  await page.locator('button').filter({ has: page.locator('.lucide-x') }).click();
+  
+  // Robust close using Escape and waiting for overlay to clear
+  await page.keyboard.press('Escape');
+  await expect(page.getByText('AI Configuration')).toBeHidden();
   
   // 2. Select 100 Questions
   await page.getByText('100', { exact: true }).click();
   await page.getByText('START EXAM').click();
   
-  // 3. Verify Timer - 100 * 0.6 = 60:00
+  // 3. Verify Timer - 100 * 0.6 = 60:00 (increased timeout for AI generation)
   const timer = page.locator('div').filter({ has: page.locator('.lucide-clock') }).last();
-  await expect(timer).toContainText('60:00');
+  await expect(timer).toContainText('60:00', { timeout: 150000 });
   
-  // 4. Check UI Responsiveness (Scroll to bottom)
+  // 4. Check UI Responsiveness
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   
   // 5. Verify a sample question exists (e.g., Q25)
