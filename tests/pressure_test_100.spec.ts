@@ -10,7 +10,7 @@ test('Pressure Test - 100 Questions (General User)', async ({ page }) => {
   
   // 2. Select 100 Questions
   await page.getByText('100', { exact: true }).click();
-  await page.getByText('GO! START PRACTICE').click();
+  await page.getByText('START EXAM').click();
   
   // 3. Verify Timer - 100 * 0.6 = 30:00
   const timer = page.locator('div').filter({ has: page.locator('.lucide-clock') }).last();
