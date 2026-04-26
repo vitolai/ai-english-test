@@ -25,17 +25,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
-  const [provider, setProvider] = useState<'ollama' | 'groq'>('ollama');
+  const [provider, setProvider] = useState<'ollama' | 'groq'>('groq');
   
   const aiSource = 'ai-cloud';
   const [aiModel, setAiModel] = useState('nemotron-3-super:cloud');
   const [customModel, setCustomModel] = useState('');
-  const [aiApiUrl, setAiApiUrl] = useState('http://localhost:11434/v1/chat/completions');
+  const [aiApiUrl, setAiApiUrl] = useState(provider === 'ollama' ? 'https://api.ollama.com/v1/chat/completions' : '');
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const maxStorage = 50;
 
-  const [groqModel, setGroqModel] = useState('llama-3.1-70b-versatile');
+  const [groqModel, setGroqModel] = useState('llama-3.3-70b-versatile');
   const [groqApiKey, setGroqApiKey] = useState('');
 
   const counts = [10, 20, 30, 50, 100, 200];
@@ -64,7 +64,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
       return;
     }
     if (!groqApiKey && provider === 'groq') {
-      alert('Please enter your Groq API Key.');
+      alert('Please enter your Groq (Recommended - Fast ⚡) API Key.');
       return;
     }
     if (aiModel === 'custom' && !customModel) {
@@ -170,7 +170,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                     className={`p-4 rounded-xl border-2 flex items-center justify-center gap-2 transition-all ${provider === 'groq' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-100 text-slate-500 hover:border-blue-200'}`}
                   >
                     <Cloud className="w-5 h-5" />
-                    <span className="font-bold">Groq</span>
+                    <span className="font-bold">Groq (Recommended - Fast ⚡)</span>
                   </button>
                 </div>
               </div>
@@ -222,13 +222,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                   </div>
                   <div>
                     <div className="flex justify-between items-center mb-3">
-                      <label className="block text-sm font-black text-slate-400 uppercase tracking-widest">Groq API Key</label>
+                      <label className="block text-sm font-black text-slate-400 uppercase tracking-widest">Groq (Recommended - Fast ⚡) API Key</label>
                       <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1">
-                        Get Groq Key <Globe className="w-3 h-3" />
+                        Get Groq (Recommended - Fast ⚡) Key <Globe className="w-3 h-3" />
                       </a>
                     </div>
-                    <input type="password" value={groqApiKey} onChange={(e) => setGroqApiKey(e.target.value)} className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 font-mono outline-none" placeholder="Enter your Groq API Key" />
-                    <p className="text-xs text-slate-400 mt-2">Groq offers free tier with generous rate limits</p>
+                    <input type="password" value={groqApiKey} onChange={(e) => setGroqApiKey(e.target.value)} className="w-full p-4 rounded-xl border-2 border-slate-100 bg-slate-50 font-mono outline-none" placeholder="Enter your Groq (Recommended - Fast ⚡) API Key" />
+                    <p className="text-xs text-slate-400 mt-2">Groq (Recommended - Fast ⚡) offers free tier with generous rate limits</p>
                   </div>
                 </>
               )}
