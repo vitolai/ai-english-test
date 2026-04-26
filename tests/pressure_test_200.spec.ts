@@ -5,7 +5,7 @@ test('Pressure Test - 200 Questions (General User)', async ({ page }) => {
   
   // 1. Configure Settings
   await page.locator('.lucide-settings').first().click();
-  await page.getByPlaceholder('Enter your Cloud API Key').fill('gsk_test_audit');
+  await page.getByPlaceholder('Enter your Groq (Recommended - Fast ⚡) API Key').fill('gsk_test_audit');
   await page.locator('button').filter({ has: page.locator('.lucide-x') }).click();
   
   // 2. Select 200 Questions
