@@ -863,3 +863,119 @@ export function generateMockData(count: number, sessionId: string): ExamData {
 
   return { questions };
 }
+// validateAndRebalanceDistribution — B012 fix
+// Added 2026-07-19: enforce the distribution from getQuestionDistribution
+// after AI generation, since AI ignores format ~30% of the time.
+
+export function validateAndRebalanceDistribution(
+  questions: Array<Record<string, unknown>>,
+  expectedDist: { listening: { part1: number; part2: number; part3: number; part4: number }; reading: { part5: number; part6: number; part7: number } },
+  opts?: { strict?: boolean; maxMismatch?: number }
+): { questions: Array<Record<string, unknown>>; actualDist: typeof expectedDist; warnings: string[] } {
+  const { strict = false, maxMismatch = 1 } = opts || {};
+
+  // Count actual questions by type/part
+  const actual = {
+    listening: { part1: 0, part2: 0, part3: 0, part4: 0 },
+    reading: { part5: 0, part6: 0, part7: 0 },
+  };
+
+  for (const q of questions) {
+    const type = q.type as string;
+    const part = q.part as number;
+    if (type === 'listening' && part >= 1 && part <= 4) {
+      actual.listening[`part${part}` as keyof typeof actual.listening]++;
+    } else if (type === 'reading' && part >= 5 && part <= 7) {
+      actual.reading[`part${part}` as keyof typeof actual.reading]++;
+    }
+  }
+
+  const warnings: string[] = [];
+
+  // Compare expected vs actual
+  const expectedL = expectedDist.listening;
+  const expectedR = expectedDist.reading;
+
+  // Check listening total
+  const actL = actual.listening.part1 + actual.listening.part2 + actual.listening.part3 + actual.listening.part4;
+  const expL = expectedL.part1 + expectedL.part2 + expectedL.part3 + expectedL.part4;
+
+  // Check reading total
+  const actR = actual.reading.part5 + actual.reading.part6 + actual.reading.part7;
+  const expR = expectedR.part5 + expectedR.part6 + expectedR.part7;
+
+  // If strict mode and total mismatch > maxMismatch, throw
+  if (strict && Math.abs(actL - expL) > maxMismatch) {
+    throw new Error(`Distribution mismatch (listening): expected ${expL}, got ${actL} — rejecting session`);
+  }
+  if (strict && Math.abs(actR - expR) > maxMismatch) {
+    throw new Error(`Distribution mismatch (reading): expected ${expR}, got ${actR} — rejecting session`);
+  }
+
+  // Per-part check (informational, not throwing unless strict)
+  const parts = [
+    { key: 'part1', exp: expectedL.part1, act: actual.listening.part1, type: 'listening' },
+    { key: 'part2', exp: expectedL.part2, act: actual.listening.part2, type: 'listening' },
+    { key: 'part3', exp: expectedL.part3, act: actual.listening.part3, type: 'listening' },
+    { key: 'part4', exp: expectedL.part4, act: actual.listening.part4, type: 'listening' },
+    { key: 'part5', exp: expectedR.part5, act: actual.reading.part5, type: 'reading' },
+    { key: 'part6', exp: expectedR.part6, act: actual.reading.part6, type: 'reading' },
+    { key: 'part7', exp: expectedR.part7, act: actual.reading.part7, type: 'reading' },
+  ];
+
+  for (const p of parts) {
+    if (p.act !== p.exp) {
+      warnings.push(`${p.type} ${p.key}: expected ${p.exp}, got ${p.act}`);
+    }
+  }
+
+  // Rebalance if needed (lax mode): re-label overflow questions
+  // Only adjust within the same type (listening->listening, reading->reading)
+  // Strategy: find overflow parts, move excess questions to deficit parts
+  let adjusted = [...questions];
+
+  for (const [typeKey, expectedType] of [['listening', expectedL], ['reading', expectedR]] as const) {
+    const actualType = actual[typeKey];
+    const totalAct = Object.values(actualType).reduce((a, b) => a + b, 0);
+    const totalExp = Object.values(expectedType).reduce((a, b) => a + b, 0);
+
+    if (totalAct !== totalExp) {
+      // If total differs, we can't fully rebalance — just warn
+      warnings.push(`${typeKey} total mismatch: expected ${totalExp}, got ${totalAct} (cannot rebalance across types)`);
+      continue;
+    }
+
+    // Find overflow and deficit parts
+    const overflowParts: Array<{ part: keyof typeof expectedType; excess: number }> = [];
+    const deficitParts: Array<{ part: keyof typeof expectedType; needed: number }> = [];
+
+    for (const p of Object.keys(expectedType) as Array<keyof typeof expectedType>) {
+      const diff = actualType[p] - expectedType[p];
+      if (diff > 0) overflowParts.push({ part: p, excess: diff });
+      else if (diff < 0) deficitParts.push({ part: p, needed: -diff });
+    }
+
+    // Re-label overflow questions to deficit parts
+    for (const overflow of overflowParts) {
+      let remainingExcess = overflow.excess;
+      for (const deficit of deficitParts) {
+        if (remainingExcess <= 0 || deficit.needed <= 0) continue;
+        const move = Math.min(remainingExcess, deficit.needed);
+
+        // Find questions with the overflow part and change their part
+        for (const q of adjusted) {
+          if (remainingExcess <= 0 || deficit.needed <= 0) break;
+          if (q.type === typeKey && q.part === parseInt(overflow.part.replace('part', ''))) {
+            q.part = parseInt(deficit.part.replace('part', ''));
+            remainingExcess--;
+            deficit.needed--;
+            actualType[overflow.part]--;
+            actualType[deficit.part]++;
+          }
+        }
+      }
+    }
+  }
+
+  return { questions: adjusted, actualDist: actual, warnings };
+}

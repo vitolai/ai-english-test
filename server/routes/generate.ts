@@ -14,6 +14,7 @@ import {
   ensurePart2EmptyQuestion,
   ensurePart2Transcripts,
   ensurePart34Transcripts,
+  validateAndRebalanceDistribution,
 } from '../services/ai.js';
 import { generateAudio } from '../services/audio.js';
 import type { SessionStores } from '../app.js';
@@ -147,6 +148,12 @@ Return ONLY valid JSON: { "questions": [...] }`;
         finalQuestions = ensurePart2Transcripts(finalQuestions);
         finalQuestions = ensurePart34Transcripts(finalQuestions);
         const examData = { title: 'TOEIC Session', questions: finalQuestions };
+        const dist = getQuestionDistribution(questionCount);
+        const validation = validateAndRebalanceDistribution(finalQuestions, dist, { strict: false });
+        if (validation.warnings.length > 0) {
+          console.warn("[Distribution validation] warnings:", validation.warnings);
+        }
+        finalQuestions = validation.questions;
         const jsonPath = path.join(sessionDir, 'exam_data.json');
         fs.writeFileSync(jsonPath, JSON.stringify(examData, null, 2));
 
