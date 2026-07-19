@@ -68,7 +68,7 @@ MALE_NAMES = {
 }
 # Female: explicitly feminine given names used as speaker labels in TOEIC transcripts.
 FEMALE_NAMES = {
-    "jennifer", "sarah", "lisa", "mary", "emma", "karen", "amy", "susan",
+    "jennifer", "sarah", "lisa", "mary", "emma", "karen", "amy", "susan", "laura",
     "maya", "anna", "maria", "nina", "olga", "tara", "gina", "woman", "w",
 }
 
