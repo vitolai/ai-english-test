@@ -58,8 +58,112 @@ async def gen_multi_voice_audio(file_path, segments, sem):
 
 MALE_VOICE = "en-US-GuyNeural"
 FEMALE_VOICE = "en-US-JennyNeural"
-MALE_NAMES = ["michael", "man", "m", "john", "david", "robert", "james", "mark", "tom", "kevin"]
-FEMALE_NAMES = ["jennifer", "woman", "w", "sarah", "lisa", "mary", "emma", "karen", "amy", "susan"]
+
+# Comprehensive name -> gender maps (lowercase).
+# Male: explicitly masculine given names used as speaker labels in TOEIC transcripts.
+MALE_NAMES = {
+    "michael", "john", "david", "robert", "james", "mark", "tom", "kevin",
+    "alex", "pete", "peter", "hank", "vik", "leo", "lee", "sam", "chris",
+    "jordan", "jamie", "man", "m",
+}
+# Female: explicitly feminine given names used as speaker labels in TOEIC transcripts.
+FEMALE_NAMES = {
+    "jennifer", "sarah", "lisa", "mary", "emma", "karen", "amy", "susan",
+    "maya", "anna", "maria", "nina", "olga", "tara", "gina", "woman", "w",
+}
+
+# Generic role labels that don't carry gender. We alternate voice by position
+# (first occurrence -> male, second -> female, third -> male, ...). The label
+# itself is stripped from the dialogue so it is never spoken aloud.
+GENERIC_ROLE_LABELS = {
+    "advisor", "agent", "analyst", "assistant", "client", "colleague",
+    "coordinator", "employee", "engineer", "hr", "investor", "leader",
+    "legal", "manager", "member", "passenger", "supervisor", "trader",
+    "traveler", "speaker", "person", "host", "guest", "customer",
+    "representative", "officer", "director", "president", "secretary",
+    "receptionist", "operator", "narrator", "announcer",
+}
+
+# Parse a single speaker turn: capture the speaker name (group 1) and the
+# dialogue (group 2). Only used by parse_speaker_turns when iterating over
+# label matches. The dialogue is what gets passed to edge_tts -- the speaker
+# name is NEVER spoken.
+SPEAKER_TURN_PARSE_RE = re.compile(r"^([A-Z][a-zA-Z]{1,}):\s*(.*)", re.DOTALL)
+
+
+def _voice_for_speaker(speaker, alternate_index):
+    """Pick a voice for a speaker label.
+
+    speaker: lowercase speaker label (e.g. 'michael', 'maya', 'manager').
+    alternate_index: position among generic/unknown speakers so far (used to
+        alternate male/female voices when no explicit gender is known).
+    """
+    if speaker in MALE_NAMES:
+        return MALE_VOICE
+    if speaker in FEMALE_NAMES:
+        return FEMALE_VOICE
+    # Generic role or unknown name -> alternate by position to ensure
+    # distinct voices across a multi-turn conversation.
+    return MALE_VOICE if alternate_index % 2 == 0 else FEMALE_VOICE
+
+
+def parse_speaker_turns(transcript):
+    """Parse a multi-speaker transcript into (speaker, dialogue, voice) tuples.
+
+    Only the dialogue is returned for TTS; the speaker name is stripped so it
+    is never read aloud. Voices are assigned by gender when the speaker name
+    has a known gender, otherwise alternated by position.
+
+    A "speaker turn" is a span starting with a Capitalised label of at least
+    two letters followed by a colon and whitespace, e.g. "Alex: ...". We find
+    all such labels and slice the transcript between them. Any text before
+    the first label is treated as narration (no speaker).
+    """
+    segments = []
+    if not transcript:
+        return segments
+
+    # Find every speaker label position. A label is a Capitalised word of at
+    # least 2 letters followed by ":" and whitespace. It must either start
+    # the transcript, or be preceded by a sentence-ending punctuation mark
+    # and whitespace (". ", "! ", "? "). This prevents matching substrings
+    # like "A:" inside a word or "Mr.:" style abbreviations.
+    label_re = re.compile(
+        r"(?:(?:^|(?<=[.!?]\s)))([A-Z][a-zA-Z]{1,}):\s+"
+    )
+    matches = list(label_re.finditer(transcript))
+
+    if not matches:
+        # No speaker labels found -> single narration segment.
+        segments.append(("", transcript.strip(), FEMALE_VOICE))
+        return segments
+
+    # Text before the first label, if any, is narration.
+    if matches[0].start() > 0:
+        pre = transcript[: matches[0].start()].strip()
+        if pre:
+            segments.append(("", pre, FEMALE_VOICE))
+
+    generic_index = 0
+    for i, m in enumerate(matches):
+        speaker = m.group(1).lower()
+        start = m.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(transcript)
+        dialogue = transcript[start:end].strip()
+        if not dialogue:
+            continue
+        if speaker in MALE_NAMES:
+            voice = MALE_VOICE
+        elif speaker in FEMALE_NAMES:
+            voice = FEMALE_VOICE
+        else:
+            # Generic role label or unknown name: alternate by position so a
+            # two-speaker conversation gets distinct male+female voices.
+            voice = MALE_VOICE if generic_index % 2 == 0 else FEMALE_VOICE
+            generic_index += 1
+        segments.append((speaker, dialogue, voice))
+    return segments
+
 
 async def main():
     if len(sys.argv) < 3:
@@ -110,32 +214,14 @@ async def main():
                 text = "Could you please tell me about the current status?"
         elif q.get("part") in (3, 4):
             # Part 3/4: multi-voice audio
-            # Split transcript by speaker, use different voices per speaker gender
             transcript = q.get("transcript", "")
             question = q.get("question", "")
             options = q.get("options", [])
             segments = []
             if transcript:
-                # Parse speaker turns
-                turns = re.split(r"(?=(?:Michael|Jennifer|M|W|Man|Woman|John|David|Robert|James|Mark|Sarah|Lisa|Mary|Emma|Karen|Tom|Kevin|Amy|Susan):\s*)", transcript)
-                for turn in turns:
-                    turn = turn.strip()
-                    if not turn:
-                        continue
-                    name_match = re.match(r"^([A-Za-z]+):\s*(.*)", turn, re.DOTALL)
-                    if name_match:
-                        speaker = name_match.group(1).lower()
-                        dialogue = name_match.group(2).strip()
-                        if speaker in MALE_NAMES:
-                            v = MALE_VOICE
-                        elif speaker in FEMALE_NAMES:
-                            v = FEMALE_VOICE
-                        else:
-                            v = FEMALE_VOICE
-                        if dialogue:
-                            segments.append((dialogue, v))
-                    else:
-                        segments.append((turn, FEMALE_VOICE))
+                parsed = parse_speaker_turns(transcript)
+                # gen_multi_voice_audio expects (text, voice) tuples
+                segments.extend((dialogue, voice) for (_sp, dialogue, voice) in parsed)
             if question:
                 segments.append(("Question: {}".format(question), FEMALE_VOICE))
             if options:
