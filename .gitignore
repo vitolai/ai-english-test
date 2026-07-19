@@ -1,0 +1,11 @@
+node_modules/
+storage/
+dist/
+*.log
+.env
+*.mp3
+/tmp/
+__pycache__/
+nohup.out
+test-results/
+*.bak

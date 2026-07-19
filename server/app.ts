@@ -1,0 +1,173 @@
+import express from 'express';
+import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import type { Response, Request } from 'express';
+import { createGenerateRouter } from './routes/generate.js';
+import { createIngestRouter } from './routes/ingest.js';
+
+// ============================================================
+// DIRECTORY SETUP
+// ============================================================
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT_DIR = path.resolve(__dirname, '..');
+
+const STORAGE_DIR = path.join(ROOT_DIR, 'storage', 'sessions');
+const UPLOAD_DIR = path.join(ROOT_DIR, 'storage', 'uploads');
+if (!fs.existsSync(STORAGE_DIR)) fs.mkdirSync(STORAGE_DIR, { recursive: true });
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+// ============================================================
+// SESSION STORES (shared across routes)
+// ============================================================
+
+export interface SessionStores {
+  sseClients: Map<string, Response>;
+  sessionStatus: Map<string, { phase: string; progress: number; message: string }>;
+}
+
+const sseClients = new Map<string, Response>();
+const sessionStatus = new Map<string, { phase: string; progress: number; message: string }>();
+
+const stores: SessionStores = { sseClients, sessionStatus };
+
+// ============================================================
+// EXPRESS APP
+// ============================================================
+
+const app = express();
+const PORT = 3001;
+
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use('/storage', express.static(path.join(ROOT_DIR, 'storage')));
+
+// ============================================================
+// ROUTES
+// ============================================================
+
+app.use(createGenerateRouter(stores, STORAGE_DIR));
+app.use(createIngestRouter(UPLOAD_DIR));
+
+// ============================================================
+// SSE STREAMING ENDPOINT
+// ============================================================
+
+app.get('/api/events/:sessionId', (req: Request, res: Response) => {
+  const sessionId = req.params.sessionId as string;
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+
+  res.write(`data: ${JSON.stringify({ type: 'connected' })}\n\n`);
+
+  const current = sessionStatus.get(sessionId);
+  if (current) {
+    res.write(`data: ${JSON.stringify({ type: 'progress', ...current })}\n\n`);
+  }
+
+  sseClients.set(sessionId, res);
+  req.on('close', () => sseClients.delete(sessionId));
+});
+
+// ============================================================
+// STATUS ENDPOINT (backward compat polling)
+// ============================================================
+
+app.get('/api/status/:sessionId', (req: Request, res: Response) => {
+  const sessionId = req.params.sessionId as string;
+  const status = sessionStatus.get(sessionId);
+  if (!status) {
+    res.status(404).json({ error: 'Session not found' });
+    return;
+  }
+  res.json(status);
+});
+
+// ============================================================
+// PROVIDER HEALTH CHECK ENDPOINT
+// ============================================================
+
+const PROVIDER_HEALTH_LIST = [
+  { id: 'nvidia-nemotron', name: 'NVIDIA Nemotron', baseURL: 'http://localhost:8080/v1' },
+  { id: 'openrouter', name: 'OpenRouter', baseURL: 'https://openrouter.ai/api/v1' },
+  { id: 'groq', name: 'Groq', baseURL: 'https://api.groq.com/openai/v1' },
+];
+
+interface ProviderHealth {
+  id: string;
+  name: string;
+  status: string;
+  latencyMs: number;
+  models: string[];
+  error: string | null;
+}
+
+const API_KEY_ENV_MAP: Record<string, string> = {
+  'nvidia-nemotron': 'NVIDIA_API_KEY',
+  openrouter: 'OPENROUTER_API_KEY',
+  groq: 'GROQ_API_KEY',
+};
+
+app.get('/api/health/providers', async (_req: Request, res: Response) => {
+  const results = await Promise.allSettled(
+    PROVIDER_HEALTH_LIST.map(async (p): Promise<ProviderHealth> => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const response = await fetch(p.baseURL + '/models', {
+          headers: { Authorization: 'Bearer ' + (process.env[API_KEY_ENV_MAP[p.id]] || 'test') },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        const data = (await response.json()) as { data?: Array<{ id: string }> };
+        return {
+          id: p.id,
+          name: p.name,
+          status: response.ok ? 'healthy' : 'unhealthy',
+          latencyMs: 0,
+          models: data.data?.map(m => m.id) || [],
+          error: null,
+        };
+      } catch (e) {
+        return {
+          id: p.id,
+          name: p.name,
+          status: 'skipped',
+          latencyMs: 0,
+          models: [],
+          error: e instanceof Error ? e.message : String(e),
+        };
+      }
+    }),
+  );
+
+  const providersHealth: ProviderHealth[] = results.map(r =>
+    r.status === 'fulfilled' ? r.value : { id: 'unknown', name: 'unknown', status: 'error', latencyMs: 0, models: [], error: r.reason instanceof Error ? r.reason.message : String(r.reason) },
+  );
+  const healthyCount = providersHealth.filter(p => p.status === 'healthy').length;
+
+  res.json({
+    totalProviders: providersHealth.length,
+    healthyCount,
+    checkedAt: new Date().toISOString(),
+    providers: providersHealth,
+  });
+});
+
+// ============================================================
+// START SERVER
+// ============================================================
+
+app.listen(PORT, () => {
+  console.log(`TOEIC backend running at http://localhost:${PORT}`);
+  console.log(`  AI SDK: Vercel AI SDK v4 (ai + @ai-sdk/openai + @ai-sdk/groq)`);
+  console.log(`  Providers: NVIDIA Nemotron / OpenRouter / Groq (cloud only)`);
+  console.log(`  Features: streaming, json-mode, retry, fallback`);
+});
