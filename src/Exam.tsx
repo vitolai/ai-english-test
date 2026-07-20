@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle2, Trophy, ArrowLeft, Headphones, BookOpen, CheckSquare, Volume2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Trophy, ArrowLeft, Headphones, BookOpen, CheckSquare, Volume2, Printer } from 'lucide-react';
 
 interface Question {
   id: number;
@@ -377,53 +377,153 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
   if (isFinished) {
     const score = data.questions.filter(q => userAnswers[q.id] === q.answer).length;
     const total = data.questions.length;
+    const pct = ((score / total) * 100).toFixed(0);
+    const PART_LABELS: Record<number, string> = { 1: 'LP1', 2: 'LP2', 3: 'LP3', 4: 'LP4', 5: 'RP5', 6: 'RP6', 7: 'RP7' };
+
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-900 animate-in fade-in zoom-in duration-500">
-        <div className="max-w-5xl w-full bg-white rounded-[3rem] shadow-2xl p-10 lg:p-20 text-center border border-slate-100">
-          <div className="mb-10 relative inline-block">
-             <div className="absolute inset-0 bg-amber-200 blur-3xl opacity-30 rounded-full animate-pulse" />
-             <Trophy className="w-24 h-24 text-amber-500 relative z-10" />
+      <div className="min-h-screen bg-slate-50 p-6 lg:p-10 text-slate-900 animate-in fade-in duration-500">
+        <style>{`
+          @media print {
+            .no-print { display: none !important; }
+            .print-full-width { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            .print-break-inside-avoid { break-inside: avoid; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
+        `}</style>
+        <div className="max-w-5xl w-full mx-auto print-full-width">
+          {/* Score Summary */}
+          <div className="bg-white rounded-[3rem] shadow-2xl p-10 lg:p-20 text-center border border-slate-100 mb-12 print-break-inside-avoid">
+            <div className="mb-10 relative inline-block no-print">
+              <div className="absolute inset-0 bg-amber-200 blur-3xl opacity-30 rounded-full animate-pulse" />
+              <Trophy className="w-24 h-24 text-amber-500 relative z-10" />
+            </div>
+            <h2 className="text-5xl font-black text-slate-800 mb-4 tracking-tighter">Exam Completed!</h2>
+            <p className="text-2xl font-bold text-blue-600 mb-2">
+              Score: {score} / {total} ({pct}%)
+            </p>
+            <div className="flex justify-center gap-8 mt-6 mb-4">
+              <div className="text-center">
+                <div className="text-4xl font-black text-emerald-600">{score}</div>
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Correct</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-black text-red-500">{total - score}</div>
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Incorrect</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-black text-slate-700">{pct}%</div>
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Percentage</div>
+              </div>
+            </div>
+            <button
+              onClick={() => window.print()}
+              className="no-print mt-8 px-8 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full font-black text-lg transition-all flex items-center gap-3 mx-auto shadow-sm hover:scale-105"
+            >
+              <Printer className="w-5 h-5" />
+              Print Results
+            </button>
           </div>
-          <h2 className="text-5xl font-black text-slate-800 mb-4 tracking-tighter">Exam Completed!</h2>
-          <p className="text-2xl font-bold text-blue-600 mb-16">
-            Score: {score} / {total} ({((score / total) * 100).toFixed(0)}%)
-          </p>
-          
+
           {/* Detailed Answer Review */}
-          <div className="mt-16 overflow-hidden rounded-3xl border border-slate-200 shadow-lg">
-            <div className="bg-slate-800 text-white px-6 py-4 font-black text-lg">
+          <div className="bg-white rounded-[3rem] shadow-xl border border-slate-100 overflow-hidden mb-12">
+            <div className="bg-slate-800 text-white px-8 py-5 font-black text-lg">
               Detailed Answer Review ({total} questions)
             </div>
             <div className="divide-y divide-slate-100">
               {data.questions.map((q, i) => {
                 const userAns = userAnswers[q.id];
                 const isCorrect = userAns === q.answer;
-                const partLabel = q.type === 'listening' ? 'L' : 'R';
+                const partLabel = PART_LABELS[q.part] || `P${q.part}`;
+                const isPart1 = q.type === 'listening' && q.part === 1;
+                const isPart34 = q.type === 'listening' && (q.part === 3 || q.part === 4);
+                const hasPassage = Boolean(q.context || q.passage);
+                const optionLabels = ['A', 'B', 'C', 'D'];
                 return (
-                  <div key={q.id} className={`flex items-center px-6 py-4 ${isCorrect ? 'bg-emerald-50/40' : 'bg-red-50/40'}`}>
-                    <div className="w-16 flex-shrink-0">
-                      <div className="text-xs font-bold text-slate-400">{partLabel}P{q.part}</div>
-                      <div className="text-lg font-black text-slate-700">Q{i+1}</div>
+                  <div key={q.id} className={`px-8 py-6 print-break-inside-avoid ${
+                    !userAns ? 'bg-slate-50/60' : isCorrect ? 'bg-emerald-50/40' : 'bg-red-50/40'
+                  }`}>
+                    {/* Header row */}
+                    <div className="flex items-center gap-4 mb-4">
+                      <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-black tracking-wider">
+                        {partLabel}
+                      </span>
+                      <span className="text-lg font-black text-slate-700">Q{i + 1}</span>
+                      <span className={`ml-auto text-sm font-bold px-3 py-1 rounded-full ${
+                        !userAns ? 'bg-slate-200 text-slate-500' : isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {!userAns ? 'Unanswered' : isCorrect ? 'Correct' : 'Incorrect'}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0 px-4">
-                      <div className="text-sm text-slate-500 truncate">
-                        {(q.question || 'Listen to the audio').slice(0, 60)}
+
+                    {/* Photo thumbnail for Part 1 */}
+                    {isPart1 && unsplashUrl(q.image) && (
+                      <div className="mb-4">
+                        <img
+                          src={unsplashUrl(q.image) || undefined}
+                          alt="Part 1 photograph"
+                          className="w-32 h-24 object-cover rounded-xl border border-slate-200 shadow-sm"
+                        />
                       </div>
+                    )}
+
+                    {/* Passage for Part 3/4 */}
+                    {isPart34 && hasPassage && (
+                      <div className="mb-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-sm text-slate-600 leading-relaxed max-h-40 overflow-y-auto">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/20" />
+                        <p className="whitespace-pre-line">{q.context || q.passage}</p>
+                      </div>
+                    )}
+
+                    {/* Full question text (NO truncation) */}
+                    <p className="text-base font-bold text-slate-800 mb-4 leading-relaxed">
+                      {q.question || (q.type === 'listening' ? 'Listen to the audio and answer the question.' : 'Read the text and choose the best answer.')}
+                    </p>
+
+                    {/* All 4 options */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {q.options.map((opt, oi) => {
+                        const label = optionLabels[oi];
+                        const isUserSelected = userAns === label;
+                        const isCorrectOption = q.answer === label;
+                        let borderCls = 'border-slate-200';
+                        let bgCls = 'bg-white';
+                        let textCls = 'text-slate-500';
+                        if (isCorrectOption) {
+                          borderCls = 'border-emerald-500';
+                          bgCls = 'bg-emerald-50';
+                          textCls = 'text-emerald-800';
+                        }
+                        if (isUserSelected && !isCorrectOption) {
+                          borderCls = 'border-red-500';
+                          bgCls = 'bg-red-50';
+                          textCls = 'text-red-700';
+                        }
+                        return (
+                          <div
+                            key={label}
+                            className={`flex items-center gap-3 p-3 rounded-xl border-2 ${borderCls} ${bgCls} transition-all`}
+                          >
+                            <span className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black ${
+                              isCorrectOption ? 'bg-emerald-500 text-white' : isUserSelected ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-400'
+                            }`}>
+                              {label}
+                            </span>
+                            <span className={`text-sm font-semibold ${textCls}`}>
+                              {isPart1 || (q.type === 'listening' && q.part === 2) ? '(Audio option)' : opt}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="flex-shrink-0 grid grid-cols-2 gap-6 text-center">
-                      <div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase">Your Answer</div>
-                        <div className={`text-2xl font-black ${userAns ? (isCorrect ? 'text-emerald-600' : 'text-red-600') : 'text-slate-300'}`}>
-                          {userAns || '—'}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase">Correct</div>
-                        <div className="text-2xl font-black text-emerald-600">{q.answer}</div>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 ml-4 w-8">
-                      {isCorrect ? <span className="text-xl">✅</span> : <span className="text-xl">❌</span>}
+
+                    {/* User answer vs correct summary */}
+                    <div className="flex items-center gap-6 mt-4 text-sm">
+                      <span className="font-bold text-slate-500">
+                        Your answer: <span className={isCorrect ? 'text-emerald-600' : 'text-red-600'}>{userAns || '—'}</span>
+                      </span>
+                      <span className="font-bold text-slate-500">
+                        Correct: <span className="text-emerald-600">{q.answer}</span>
+                      </span>
                     </div>
                   </div>
                 );
@@ -431,13 +531,16 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
             </div>
           </div>
 
-          <button 
-            onClick={onBack}
-            className="px-16 py-6 bg-slate-900 text-white rounded-full font-black text-xl hover:bg-black hover:scale-105 transition-all flex items-center gap-4 mx-auto shadow-2xl mt-12"
-          >
-            <ArrowLeft className="w-6 h-6" />
-            RETURN TO DASHBOARD
-          </button>
+          {/* Return to Dashboard */}
+          <div className="flex justify-center mb-16">
+            <button
+              onClick={onBack}
+              className="no-print px-16 py-6 bg-slate-900 text-white rounded-full font-black text-xl hover:bg-black hover:scale-105 transition-all flex items-center gap-4 shadow-2xl"
+            >
+              <ArrowLeft className="w-6 h-6" />
+              RETURN TO DASHBOARD
+            </button>
+          </div>
         </div>
       </div>
     );
