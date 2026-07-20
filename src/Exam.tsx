@@ -31,7 +31,8 @@ const StickyHeader: React.FC<{
   totalQs: number;
   answeredCount: number;
   onExit: () => void;
-}> = ({ section, timeLeft, totalQs, answeredCount, onExit }) => {
+  notification?: string;
+}> = ({ section, timeLeft, totalQs, answeredCount, onExit, notification }) => {
   const progress = totalQs > 0 ? (answeredCount / totalQs) * 100 : 0;
   const mins = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
@@ -51,8 +52,13 @@ const StickyHeader: React.FC<{
             </div>
           </div>
           <div className="flex items-center gap-6">
+            {notification && (
+              <div className="px-4 py-2 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-sm font-bold animate-pulse">
+                {notification}
+              </div>
+            )}
             <div className="hidden sm:flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
-              <Headphones className="w-5 h-5 text-blue-600" />
+              {section === 'listening' ? <Headphones className="w-5 h-5 text-blue-600" /> : <BookOpen className="w-5 h-5 text-blue-600" />}
               <span className="font-mono font-black text-lg text-slate-800 tabular-nums">
                 {mins.toString().padStart(2, '0')}:{secs.toString().padStart(2, '0')}
               </span>
@@ -241,8 +247,8 @@ const QuestionCard: React.FC<{
         </div>
       )}
 
-      {/* Reading Context / Passage */}
-      {(q.context || q.passage) && (
+      {/* Reading Context / Passage (hidden for Part 1) */}
+      {!isPart1 && (q.context || q.passage) && (
         <div className="mb-10 p-8 bg-slate-50/50 rounded-3xl border border-slate-100 text-slate-700 text-lg leading-relaxed shadow-inner relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/20" />
           <p className="whitespace-pre-line">{q.context || q.passage}</p>
@@ -265,15 +271,22 @@ const QuestionCard: React.FC<{
           const isPart2Only3 = isPart2 && i >= 3; // Part 2 only has 3 options
           if (isPart2Only3) return null;
           return (
-            <button
+            <label
               key={label}
-              onClick={() => onAnswer(q.id, label)}
-              className={`flex items-center gap-5 p-6 rounded-2xl border-2 text-left transition-all duration-300 group/btn ${
+              className={`flex items-center gap-5 p-6 rounded-2xl border-2 text-left transition-all duration-300 group/btn cursor-pointer ${
                 isSelected 
                   ? 'border-blue-600 bg-blue-50/80 ring-4 ring-blue-100 shadow-lg' 
                   : 'border-slate-100 hover:border-blue-200 bg-white hover:bg-slate-50'
               }`}
             >
+              <input
+                type="radio"
+                name={`q-${q.id}`}
+                value={label}
+                checked={isSelected}
+                onChange={() => onAnswer(q.id, label)}
+                className="sr-only"
+              />
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg flex-shrink-0 transition-all ${
                 isSelected ? 'bg-blue-600 text-white rotate-6' : 'bg-slate-100 text-slate-400 group-hover/btn:bg-blue-100 group-hover/btn:text-blue-600'
               }`}>
@@ -289,7 +302,7 @@ const QuestionCard: React.FC<{
                   {opt}
                 </span>
               )}
-            </button>
+            </label>
           );
         })}
       </div>
@@ -298,27 +311,59 @@ const QuestionCard: React.FC<{
 };
 
 const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
+  const isTestMode = process.env.NODE_ENV === 'test' || new URLSearchParams(window.location.search).get('fastTimer') === '1';
+  const timerDivisor = isTestMode ? 100 : 1;
+
   const [currentSection, setCurrentSection] = useState<'listening' | 'reading'>('listening');
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
-  const [timeLeft, setTimeLeft] = useState((data.listeningTime || 0) + (data.readingTime || 0) || 1200);
+  const [listeningTimeLeft, setListeningTimeLeft] = useState((data.listeningTime || 600) / timerDivisor);
+  const [readingTimeLeft, setReadingTimeLeft] = useState((data.readingTime || 600) / timerDivisor);
   const [isFinished, setIsFinished] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
+  const [listeningExpired, setListeningExpired] = useState(false);
+  const [listeningLocked, setListeningLocked] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const listeningQs = data.questions ? data.questions.filter(q => q.type === 'listening') : [];
   const readingQs = data.questions ? data.questions.filter(q => q.type === 'reading') : [];
-  const currentQs = currentSection === 'listening' ? listeningQs : readingQs;
+  const effectiveSection = listeningLocked ? 'reading' : currentSection;
+  const currentQs = effectiveSection === 'listening' ? listeningQs : readingQs;
 
   useEffect(() => {
-    if (isFinished || timeLeft <= 0) return;
-    const interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    if (isFinished) return;
+    if (currentSection === 'listening' && listeningTimeLeft <= 0) return;
+    if (currentSection === 'reading' && readingTimeLeft <= 0) return;
+    const interval = setInterval(() => {
+      if (currentSection === 'listening') {
+        setListeningTimeLeft(t => t - 1);
+      } else {
+        setReadingTimeLeft(t => t - 1);
+      }
+    }, 1000);
     return () => clearInterval(interval);
-  }, [timeLeft, isFinished]);
+  }, [currentSection, listeningTimeLeft, readingTimeLeft, isFinished]);
 
   useEffect(() => {
-    if (timeLeft <= 0 && !isFinished) {
+    if (listeningTimeLeft <= 0 && !isFinished && currentSection === 'listening' && !listeningExpired) {
+      setListeningExpired(true);
+      setListeningLocked(true);
+      jumpToReading();
+    }
+  }, [listeningTimeLeft, isFinished, currentSection, listeningExpired]);
+
+  useEffect(() => {
+    if (listeningExpired) {
+      setShowToast(true);
+      const toastTimer = setTimeout(() => setShowToast(false), 2000);
+      return () => clearTimeout(toastTimer);
+    }
+  }, [listeningExpired]);
+
+  useEffect(() => {
+    if (readingTimeLeft <= 0 && !isFinished && currentSection === 'reading') {
       setIsFinished(true);
     }
-  }, [timeLeft, isFinished]);
+  }, [readingTimeLeft, isFinished, currentSection]);
 
   const handleAnswer = (qid: number, option: string) => {
     setUserAnswers(prev => ({ ...prev, [qid]: option }));
@@ -400,12 +445,18 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900 selection:bg-blue-100">
+      {showToast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-amber-500 text-white rounded-full font-black text-lg shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300">
+          Listening time is up! Now in Reading section.
+        </div>
+      )}
       <StickyHeader 
-        section={currentSection} 
-        timeLeft={timeLeft} 
+        section={effectiveSection} 
+        timeLeft={effectiveSection === 'listening' ? listeningTimeLeft : readingTimeLeft} 
         totalQs={data.questions.length} 
         answeredCount={Object.keys(userAnswers).length} 
-        onExit={onBack} 
+        onExit={onBack}
+        notification={undefined}
       />
 
       <main className="flex-1 p-6 lg:p-16">
@@ -413,10 +464,10 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
           {/* Section Introduction */}
           <div className="mb-16 text-center animate-in slide-in-from-top-8 duration-700">
              <h1 className="text-5xl font-black text-slate-900 mb-4 tracking-tighter uppercase">
-                {currentSection === 'listening' ? 'Listening Comprehension' : 'Reading Test'}
+                {effectiveSection === 'listening' ? 'Listening Comprehension' : 'Reading Test'}
              </h1>
              <p className="text-slate-500 font-bold text-xl max-w-2xl mx-auto leading-relaxed">
-                {currentSection === 'listening' 
+                {effectiveSection === 'listening' 
                     ? 'Carefully observe any photograph provided and listen to the audio prompts. You will only hear each prompt once.'
                     : 'Read the provided passages or incomplete sentences and select the best answer to complete the meaning.'
                 }
@@ -428,7 +479,7 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
               <QuestionCard 
                 key={q.id}
                 q={q}
-                index={currentSection === 'listening' ? idx : listeningQs.length + idx}
+                index={effectiveSection === 'listening' ? idx : listeningQs.length + idx}
                 answer={userAnswers[q.id]}
                 onAnswer={handleAnswer}
                 playingAudioId={playingAudioId}
@@ -439,16 +490,16 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
 
           {/* Transition Buttons */}
           <div className="mt-20 mb-32 flex justify-center">
-            {currentSection === 'listening' ? (
+            {effectiveSection === 'listening' && listeningTimeLeft > 0 ? (
               <button 
-                onClick={jumpToReading}
+                onClick={() => { setListeningLocked(true); jumpToReading(); }}
                 className="group px-16 py-8 bg-blue-600 text-white rounded-full font-black text-2xl hover:bg-blue-700 transition-all flex items-center gap-6 shadow-2xl shadow-blue-200 hover:-translate-y-2 active:translate-y-0"
               >
                 <BookOpen className="w-8 h-8" />
                 PROCEED TO READING SECTION
                 <ChevronRight className="w-8 h-8 group-hover:translate-x-1 transition-transform" />
               </button>
-            ) : (
+            ) : effectiveSection === 'reading' ? (
               <button 
                 onClick={() => setIsFinished(true)}
                 className="group px-16 py-8 bg-emerald-600 text-white rounded-full font-black text-2xl hover:bg-emerald-700 transition-all flex items-center gap-6 shadow-2xl shadow-emerald-200 hover:-translate-y-2 active:translate-y-0"
@@ -457,7 +508,7 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
                 FINISH EXAM & VIEW SCORE
                 <CheckCircle2 className="w-8 h-8 group-hover:scale-110 transition-transform" />
               </button>
-            )}
+            ) : null}
           </div>
         </div>
       </main>

@@ -18,6 +18,7 @@ import {
   ensurePart5Questions,
   ensurePart6Questions,
   validateAndRebalanceDistribution,
+  getExamTimes,
 } from '../services/ai.js';
 import { generateAudio } from '../services/audio.js';
 import type { SessionStores } from '../app.js';
@@ -166,7 +167,8 @@ Return ONLY valid JSON: { "questions": [...] }`;
           finalQuestions = ensurePart5Questions(finalQuestions);
           finalQuestions = ensurePart6Questions(finalQuestions);
 
-          const examData = { title: 'TOEIC Session', questions: finalQuestions };
+          const times = getExamTimes(questionCount);
+          const examData = { title: 'TOEIC Session', questions: finalQuestions, listeningTime: times.listeningTime, readingTime: times.readingTime };
           const jsonPath = path.join(activeSessionDir, 'exam_data.json');
           fs.writeFileSync(jsonPath, JSON.stringify(examData, null, 2));
 

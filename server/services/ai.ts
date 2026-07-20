@@ -616,6 +616,41 @@ export function buildPart1Instruction(
   return "";
 }
 
+export function getExamTimes(questionCount: number): { listeningTime: number; readingTime: number } {
+  const known: Array<{ q: number; l: number; r: number }> = [
+    { q: 10, l: 300, r: 300 },
+    { q: 20, l: 480, r: 720 },
+    { q: 50, l: 1200, r: 1800 },
+    { q: 100, l: 1800, r: 1800 },
+    { q: 200, l: 2700, r: 4500 },
+  ];
+
+  // Clamp to known range
+  const n = Math.max(known[0].q, Math.min(questionCount, known[known.length - 1].q));
+
+  // Exact match
+  for (const k of known) {
+    if (n === k.q) return { listeningTime: k.l, readingTime: k.r };
+  }
+
+  // Find bracketing points for linear interpolation
+  let lo = known[0];
+  let hi = known[known.length - 1];
+  for (let i = 0; i < known.length - 1; i++) {
+    if (n > known[i].q && n < known[i + 1].q) {
+      lo = known[i];
+      hi = known[i + 1];
+      break;
+    }
+  }
+
+  const t = (n - lo.q) / (hi.q - lo.q);
+  return {
+    listeningTime: Math.round(lo.l + t * (hi.l - lo.l)),
+    readingTime: Math.round(lo.r + t * (hi.r - lo.r)),
+  };
+}
+
 // ============================================================
 // MOCK DATA GENERATOR
 // ============================================================
@@ -992,7 +1027,8 @@ export function generateMockData(count: number, sessionId: string): ExamData {
     }
   }
 
-  return { questions };
+  const times = getExamTimes(count);
+  return { questions, listeningTime: times.listeningTime, readingTime: times.readingTime };
 }
 // validateAndRebalanceDistribution — B012 fix
 // Added 2026-07-19: enforce the distribution from getQuestionDistribution
