@@ -197,9 +197,94 @@ def check_audio(session_id):
     return True, "Audio files OK"
 
 
-def check_score_page():
-    ok, out = run("curl -s http://localhost:5173 | grep -c 'Detailed Answer Review'")
-    return ok and int(out or 0) > 0
+def check_score_page(session_id=None):
+    """Use Playwright to walk through the full exam flow and verify the
+    score page renders 'Detailed Answer Review'.
+
+    The flow:
+      1. Navigate to the dashboard at localhost:5173
+      2. Open the AI Configuration modal, select Mock provider
+      3. Start a 10-question mock exam
+      4. Answer all listening questions, proceed to reading
+      5. Answer all reading questions, finish the exam
+      6. Assert the 'Detailed Answer Review' text is visible on the score page
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print("  SKIP playwright not installed")
+        return False
+
+    BASE_URL = "http://localhost:5173"
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            try:
+                page.goto(BASE_URL, timeout=30_000)
+
+                # Wait for dashboard to be ready
+                page.wait_for_selector('h1:has-text("TOEIC Practice Exam")', timeout=15_000)
+
+                # Select 10 questions (should already be default, but be explicit)
+                page.locator('button:text-is("10")').click()
+
+                # Open settings modal
+                page.locator('button:has-text("START EXAM")').click()
+                page.wait_for_selector('h2:has-text("AI Configuration")', timeout=10_000)
+
+                # Select Mock provider
+                page.locator('button:has-text("Mock")').click()
+
+                # Fill API key with a test key (mock mode accepts any key)
+                api_input = page.locator('input[placeholder*="API Key"]').first
+                api_input.fill("test-mock-key-regression")
+
+                # Start the exam
+                page.locator('button:has-text("GO! START PRACTICE")').click()
+
+                # Wait for loading overlay to disappear and exam to appear
+                page.wait_for_selector(
+                    'h1:has-text("Listening Comprehension")', timeout=120_000
+                )
+
+                # Answer every listening question (click first option in each card)
+                listening_cards = page.locator('[id^="q-"]')
+                lcount = listening_cards.count()
+                for i in range(lcount):
+                    card = listening_cards.nth(i)
+                    card.locator("button").first.click()
+
+                # Proceed to reading section
+                page.locator('button:has-text("PROCEED TO READING SECTION")').click()
+                page.wait_for_selector('h1:has-text("Reading Test")', timeout=15_000)
+
+                # Answer every reading question
+                reading_cards = page.locator('[id^="q-"]')
+                rcount = reading_cards.count()
+                for i in range(rcount):
+                    card = reading_cards.nth(i)
+                    card.locator("button").first.click()
+
+                # Finish the exam
+                page.locator('button:has-text("FINISH EXAM & VIEW SCORE")').click()
+
+                # Verify the detailed review table is present
+                page.wait_for_selector(
+                    "text=Detailed Answer Review", timeout=15_000
+                )
+
+                # Additional sanity checks on the score page
+                assert page.locator("text=Exam Completed!").is_visible()
+                score_el = page.locator("text=/Score:\\s*\\d+\\s*\\/\\s*\\d+/")
+                assert score_el.is_visible()
+
+                return True
+            finally:
+                browser.close()
+    except Exception as exc:
+        print("  Score page check failed: {}".format(str(exc)[:200]))
+        return False
 
 
 def run_smoke():
@@ -270,8 +355,8 @@ def run_full():
     if not result:
         return 1
     
-    print("\nScore page...")
-    result = check_score_page()
+    print("\nScore page (Playwright integration)...")
+    result = check_score_page(sid)
     status = "PASS" if result else "FAIL"
     print("  {} Detailed review present: {}".format(status, result))
     if not result:

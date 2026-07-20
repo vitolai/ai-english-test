@@ -27,13 +27,6 @@ export const ExamSchema = z.object({
   questions: z.array(QuestionSchema),
 });
 
-export class RetryableDistributionError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'RetryableDistributionError';
-  }
-}
-
 // Fallback: ensure Part 1 questions always have an image
 // Verified-working Unsplash photo IDs (return HTTP 200) used as fallbacks
 // in ensurePart1Images. Kept in sync with PART1_DATA so that any fallback image
@@ -71,37 +64,6 @@ export function ensurePart2Transcripts(questions: Array<Record<string, unknown>>
       if (opts && opts.length > 3) {
         q['options'] = opts.slice(0, 3);
       }
-      // TOEIC spec: Part 2 question is spoken (lives in transcript/audio),
-      // NEVER displayed on screen. q.question MUST be empty string.
-      if (q['question'] && q['question'] !== '') {
-        // Defensive: if AI put the spoken question only in q.question and
-        // left transcript empty, preserve it in transcript before clearing.
-        if ((!q['transcript'] || q['transcript'] === '') && typeof q['question'] === 'string') {
-          q['transcript'] = q['question'];
-        }
-        q['question'] = '';
-      }
-    }
-    return q;
-  });
-}
-
-// Normalize Part 2 (Question-Response): q.question MUST be empty string.
-// Per TOEIC spec, Part 2 is audio-only — the spoken question lives in
-// q.transcript + audio, never on screen. The real-AI provider sometimes
-// returns a non-empty q.question; this normalizer strips it back to "".
-// Mirrors the ensurePart1Images / ensurePart34Transcripts pattern.
-export function ensurePart2EmptyQuestion(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
-  return questions.map(q => {
-    if (q['part'] === 2 && q['type'] === 'listening') {
-      if (q['question'] && q['question'] !== '') {
-        // Preserve the spoken question in transcript if AI put it only in question
-        // and transcript is empty (defensive — do not overwrite a real transcript).
-        if ((!q['transcript'] || q['transcript'] === '') && typeof q['question'] === 'string') {
-          q['transcript'] = q['question'];
-        }
-        q['question'] = '';
-      }
     }
     return q;
   });
@@ -135,73 +97,6 @@ const PART4_TALKS = [
   { transcript: "The client meeting is rescheduled to Thursday at 2 PM. Please update your calendars. The agenda includes project timeline, budget review, and deliverables. Please prepare your status reports.", question: "When is the meeting now?", options: ["Thursday at 2 PM", "Wednesday at 3 PM", "Friday at 10 AM", "Monday at 1 PM"], answer: "A" },
 ];
 
-// --- Part 6: Text Completion (passage with fill-in-the-blank questions) ---
-// Each passage contains numbered blanks (1), (2), (3). The questions array
-// has one entry per blank, and each question refers to the sentence context
-// surrounding that blank in the passage.
-const MOCK_PART6_PASSAGES: { passage: string; questions: { question: string; options: string[]; answer: string }[] }[] = [
-  {
-    passage: "Dear Valued Customer,\n\nThank you for your recent purchase from our online store. We are pleased to confirm that your order has been (1)______ and will be shipped within 2 business days. If you have any questions about your order, please don't hesitate to (2)______ our customer service team at support@example.com.\n\nSincerely,\nThe Customer Service Team",
-    questions: [
-      { question: "1. Your order has been ______ and will be shipped within 2 business days.", options: ["processed", "process", "processing", "processes"], answer: "A" },
-      { question: "2. Please don't hesitate to ______ our customer service team.", options: ["contact", "contacts", "contacted", "contacting"], answer: "A" },
-    ],
-  },
-  {
-    passage: "To: All Department Managers\nFrom: Human Resources\nSubject: Quarterly Performance Reviews\n\nPlease be reminded that quarterly performance reviews must be (1)______ by the end of this month. Managers are expected to schedule one-on-one meetings with each team member to discuss goals, achievements, and areas for (2)______. Completed forms should be submitted to the HR office no later than the last business day of the quarter.",
-    questions: [
-      { question: "1. Quarterly performance reviews must be ______ by the end of this month.", options: ["completed", "complete", "completing", "completes"], answer: "A" },
-      { question: "2. Managers should discuss goals, achievements, and areas for ______.", options: ["improvement", "improve", "improved", "improving"], answer: "A" },
-    ],
-  },
-  {
-    passage: "NOTICE: Office Renovation\n\nBeginning Monday, the third floor will be closed for renovations. Employees currently stationed on the third floor are (1)______ to temporarily relocate to the second floor. Desks and equipment will be moved over the weekend. Please ensure all personal items are (2)______ in labeled boxes before Friday end of business. The renovation is expected to last approximately six weeks.",
-    questions: [
-      { question: "1. Employees on the third floor are ______ to temporarily relocate to the second floor.", options: ["required", "require", "requiring", "requires"], answer: "A" },
-      { question: "2. Please ensure all personal items are ______ in labeled boxes before Friday.", options: ["placed", "place", "placing", "places"], answer: "A" },
-    ],
-  },
-  {
-    passage: "Company Picnic Announcement\n\nWe are excited to announce that the annual company picnic will be held at Riverside Park on Saturday, August 15th. The event will (1)______ from 11 AM to 4 PM. Lunch and refreshments will be (2)______. Employees are welcome to bring their families. Please RSVP by August 1st to help us plan for seating and catering.",
-    questions: [
-      { question: "1. The event will ______ from 11 AM to 4 PM.", options: ["take place", "takes place", "taking place", "taken place"], answer: "A" },
-      { question: "2. Lunch and refreshments will be ______.", options: ["provided", "provide", "providing", "provides"], answer: "A" },
-    ],
-  },
-  {
-    passage: "Memo: IT System Upgrade\n\nPlease be advised that a major system upgrade will be (1)______ this weekend, Saturday and Sunday. During this time, all company email and intranet services will be temporarily (2)______. Employees are encouraged to save all work and log off before 5 PM on Friday. Technical support will be available (3)______ via the IT help desk hotline.",
-    questions: [
-      { question: "1. A major system upgrade will be ______ this weekend.", options: ["performed", "perform", "performing", "performs"], answer: "A" },
-      { question: "2. Email and intranet services will be temporarily ______.", options: ["unavailable", "available", "availability", "availably"], answer: "A" },
-      { question: "3. Technical support will be available ______ via the IT help desk hotline.", options: ["throughout", "through", "thorough", "thoroughly"], answer: "A" },
-    ],
-  },
-  {
-    passage: "Job Posting: Marketing Coordinator\n\nXYZ Corporation is seeking a (1)______ Marketing Coordinator to join our growing team. The ideal candidate will have at least two years of experience in digital marketing and a strong (2)______ of social media platforms. This is a full-time (3)______ position with benefits. Please submit your resume and cover letter by the end of the month.",
-    questions: [
-      { question: "1. XYZ Corporation is seeking a ______ Marketing Coordinator.", options: ["qualified", "qualify", "qualifying", "qualifies"], answer: "A" },
-      { question: "2. The ideal candidate will have a strong ______ of social media platforms.", options: ["understanding", "understand", "understood", "understandingly"], answer: "A" },
-      { question: "3. This is a full-time ______ position with benefits.", options: ["permanent", "permanently", "permanence", "permanency"], answer: "A" },
-    ],
-  },
-  {
-    passage: "Customer Service Update\n\nWe are writing to inform you that our return policy has been (1)______ effective immediately. Customers now have 30 days from the date of purchase to return (2)______ items for a full refund. Items must be in their original packaging and accompanied by a (3)______. For more details, please visit our website or contact your nearest store.",
-    questions: [
-      { question: "1. Our return policy has been ______ effective immediately.", options: ["updated", "update", "updating", "updates"], answer: "A" },
-      { question: "2. Customers can return ______ items for a full refund.", options: ["unopened", "open", "opening", "opens"], answer: "A" },
-      { question: "3. Items must be accompanied by a ______.", options: ["receipt", "receive", "received", "receiving"], answer: "A" },
-    ],
-  },
-  {
-    passage: "Training Workshop Invitation\n\nYou are cordially invited to attend a professional development workshop on effective communication in the workplace. The session will be (1)______ by Dr. Sarah Chen, a renowned expert in organizational behavior. Attendance is (2)______ for all team leads and strongly encouraged for other staff members. Please confirm your attendance by replying to this email (3)______ Friday.",
-    questions: [
-      { question: "1. The session will be ______ by Dr. Sarah Chen.", options: ["led", "lead", "leading", "leads"], answer: "A" },
-      { question: "2. Attendance is ______ for all team leads.", options: ["mandatory", "mandate", "mandated", "mandating"], answer: "A" },
-      { question: "3. Please confirm your attendance by replying ______ Friday.", options: ["before", "beforely", "beforing", "befored"], answer: "A" },
-    ],
-  },
-];
-
 export function ensurePart34Transcripts(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
   let p3Index = 0;
   let p4Index = 0;
@@ -224,63 +119,6 @@ export function ensurePart34Transcripts(questions: Array<Record<string, unknown>
         if ((!q['options'] || q['options'].length === 0) && talk.options) q['options'] = talk.options;
         if (!q['answer'] || q['answer'] === '') q['answer'] = talk.answer;
         p4Index++;
-      }
-    }
-    return q;
-  });
-}
-
-// Fallback: ensure Part 5 questions have fill-in-the-blank format
-const PART5_FALLBACK_QUESTIONS = [
-  { question: "Please ______ the financial statements before the audit.", options: ["submit", "submits", "submitted", "submitting"], answer: "A" },
-  { question: "Despite the heavy rain, the flight ______ as scheduled.", options: ["departed", "depart", "departing", "departs"], answer: "A" },
-  { question: "The committee members ______ with the proposal after long discussion.", options: ["agreed", "agree", "agreeing", "agreement"], answer: "A" },
-  { question: "All employees must ______ the safety training by end of quarter.", options: ["complete", "completes", "completed", "completing"], answer: "A" },
-  { question: "The new policy will take ______ starting next month.", options: ["effect", "affect", "effective", "effects"], answer: "A" },
-  { question: "The manager asked the team to ______ the project timeline.", options: ["review", "reviews", "reviewing", "reviewed"], answer: "A" },
-  { question: "We appreciate your ______ in this matter.", options: ["patience", "patient", "patients", "patiently"], answer: "A" },
-  { question: "The conference room has been ______ for tomorrow's meeting.", options: ["reserved", "reserve", "reserving", "reserves"], answer: "A" },
-];
-
-export function ensurePart5Questions(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
-  let p5Index = 0;
-  return questions.map(q => {
-    if (q['part'] === 5 && q['type'] === 'reading') {
-      if (!q['question'] || q['question'] === '' || !q['options'] || (q['options'] as string[]).length < 4) {
-        const fb = PART5_FALLBACK_QUESTIONS[p5Index % PART5_FALLBACK_QUESTIONS.length];
-        if (!q['question'] || q['question'] === '') q['question'] = fb.question;
-        if (!q['options'] || (q['options'] as string[]).length < 4) q['options'] = fb.options;
-        if (!q['answer'] || q['answer'] === '') q['answer'] = fb.answer;
-        p5Index++;
-      }
-    }
-    return q;
-  });
-}
-
-export function ensurePart6Questions(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
-  let p6Index = 0;
-  return questions.map(q => {
-    if (q['part'] === 6 && q['type'] === 'reading') {
-      const hasEmptyPassage = !q['passage'] || q['passage'] === '';
-      const hasEmptyQuestion = !q['question'] || q['question'] === '';
-      if (hasEmptyPassage || hasEmptyQuestion) {
-        const entry = MOCK_PART6_PASSAGES[p6Index % MOCK_PART6_PASSAGES.length];
-        if (hasEmptyPassage) q['passage'] = entry.passage;
-        if (hasEmptyQuestion) {
-          const localIdx = p6Index % entry.questions.length;
-          const fb = entry.questions[localIdx];
-          q['question'] = fb.question;
-        }
-        if (!q['options'] || (q['options'] as string[]).length < 4) {
-          const localIdx = p6Index % entry.questions.length;
-          q['options'] = entry.questions[localIdx].options;
-        }
-        if (!q['answer'] || q['answer'] === '') {
-          const localIdx = p6Index % entry.questions.length;
-          q['answer'] = entry.questions[localIdx].answer;
-        }
-        p6Index++;
       }
     }
     return q;
@@ -507,57 +345,30 @@ export function getQuestionDistribution(questionCount: number): {
   // Listening distribution (P1=6%, P2=25%, P3=39%, P4=30% of listening)
   // Part 3 & 4 must be multiples of 3 (3 questions per conversation/talk)
   const part1 = Math.max(1, Math.round(half * 0.06));
-  let part2 = Math.max(1, Math.round(half * 0.25));
+  const part2 = Math.max(1, Math.round(half * 0.25));
   // Round Part 3 to nearest multiple of 3
   const part3Raw = Math.round(half * 0.39);
   let part3 = Math.max(3, Math.round(part3Raw / 3) * 3);
   // Part 4: remainder (ensure at least 1 question for small counts)
   let part4Raw = half - part1 - part2 - part3;
   let part4 = Math.max(0, Math.round(part4Raw / 3) * 3);
-  // For small question counts, steal from Part 3 to give Part 4 at least 1.
-  // INVARIANT: sum(listening) === half. Steal exactly 1 from part3 (3->2),
-  // give 1 to part4 (0->1): net 0, total preserved. (Round 6 Bug 2: the
-  // previous code removed 2 and added 1, losing 1 from the total at scales
-  // 10 and 100.)
+  // For small question counts, steal from Part 3 to give Part 4 at least 1
   if (part4 === 0 && half >= 4) {
-    part3 = Math.max(1, part3 - 1);  // remove 1 from P3
-    part4 = 1;                       // add 1 to P4  → net 0
+    // Reduce Part 3 by 1 question (not 3) and give Part 4 = 1
+    // This keeps both P3 and P4 present for small counts
+    part3 = Math.max(1, part3 - 2);  // Remove 2 from P3 (3->1)
+    part4 = 1;
   }
-  // Adjust if total exceeds half. Reduce part4 (in multiples of 3) first,
-  // then part3; the removed count is added back to part2 so the listening
-  // total stays exactly  (INVARIANT preserved). (Round 6 Bug 2: the
-  // previous code dropped the excess silently, making scale 50 produce 51.)
+  // Adjust if total exceeds half
   const totalListening = part1 + part2 + part3 + part4;
   if (totalListening > half) {
+    // Reduce Part 4 first, then Part 3
     const excess = totalListening - half;
     const reduce4 = Math.min(part4, Math.round(excess / 3) * 3);
     part4 -= reduce4;
-    let remaining = excess - reduce4;
-    if (remaining > 0) {
-      const reduce3 = Math.min(part3 - 1, Math.round(remaining / 3) * 3);
-      part3 -= reduce3;
-      remaining -= reduce3;
+    if (excess > reduce4) {
+      part3 -= Math.round((excess - reduce4) / 3) * 3;
     }
-    // Anything still over (rounding residue) comes off part2, which has no
-    // multiple-of-3 constraint and can absorb a unit change cleanly.
-    if (remaining > 0) {
-      const reduce2 = Math.min(part2 - 1, remaining);
-      part2 -= reduce2;
-      remaining -= reduce2;
-    }
-    // Guard: if somehow still off, trim part7's counterpart is NOT possible
-    // here (reading computed below) — instead nudge part4 by the residue.
-    if (remaining > 0) {
-      part4 = Math.max(0, part4 - remaining);
-    }
-  }
-  // If total is BELOW half (multiples-of-3 rounding leaves a gap, e.g.
-  // n=100 where part3=21 + part4=12 = 33 < 50-part1-part2=34), add the
-  // deficit to part2 (no multiple-of-3 constraint) so the listening total
-  // reaches exactly . INVARIANT: sum(listening) === half.
-  const deficit = half - (part1 + part2 + part3 + part4);
-  if (deficit > 0) {
-    part2 += deficit;
   }
   // Reading distribution (P5=30%, P6=16%, P7=54% of reading)
   const part5 = Math.max(1, Math.round(half * 0.30));
@@ -993,216 +804,4 @@ export function generateMockData(count: number, sessionId: string): ExamData {
   }
 
   return { questions };
-}
-// validateAndRebalanceDistribution — B012 fix
-// Added 2026-07-19: enforce the distribution from getQuestionDistribution
-// after AI generation, since AI ignores format ~30% of the time.
-
-export function validateAndRebalanceDistribution(
-  questions: Array<Record<string, unknown>>,
-  expectedDist: { listening: { part1: number; part2: number; part3: number; part4: number }; reading: { part5: number; part6: number; part7: number } },
-  opts?: { strict?: boolean; maxMismatch?: number }
-): { questions: Array<Record<string, unknown>>; actualDist: typeof expectedDist; warnings: string[] } {
-  const { strict = false, maxMismatch = 1 } = opts || {};
-
-  // Count actual questions by type/part
-  const actual = {
-    listening: { part1: 0, part2: 0, part3: 0, part4: 0 },
-    reading: { part5: 0, part6: 0, part7: 0 },
-  };
-
-  for (const q of questions) {
-    const type = q.type as string;
-    const part = q.part as number;
-    if (type === 'listening' && part >= 1 && part <= 4) {
-      actual.listening[`part${part}` as keyof typeof actual.listening]++;
-    } else if (type === 'reading' && part >= 5 && part <= 7) {
-      actual.reading[`part${part}` as keyof typeof actual.reading]++;
-    }
-  }
-
-  const warnings: string[] = [];
-
-  // Compare expected vs actual
-  const expectedL = expectedDist.listening;
-  const expectedR = expectedDist.reading;
-
-  // Check listening total
-  const actL = actual.listening.part1 + actual.listening.part2 + actual.listening.part3 + actual.listening.part4;
-  const expL = expectedL.part1 + expectedL.part2 + expectedL.part3 + expectedL.part4;
-
-  // Check reading total
-  const actR = actual.reading.part5 + actual.reading.part6 + actual.reading.part7;
-  const expR = expectedR.part5 + expectedR.part6 + expectedR.part7;
-
-  // Per-part check (informational)
-  const parts = [
-    { key: 'part1', exp: expectedL.part1, act: actual.listening.part1, type: 'listening' },
-    { key: 'part2', exp: expectedL.part2, act: actual.listening.part2, type: 'listening' },
-    { key: 'part3', exp: expectedL.part3, act: actual.listening.part3, type: 'listening' },
-    { key: 'part4', exp: expectedL.part4, act: actual.listening.part4, type: 'listening' },
-    { key: 'part5', exp: expectedR.part5, act: actual.reading.part5, type: 'reading' },
-    { key: 'part6', exp: expectedR.part6, act: actual.reading.part6, type: 'reading' },
-    { key: 'part7', exp: expectedR.part7, act: actual.reading.part7, type: 'reading' },
-  ];
-
-  for (const p of parts) {
-    if (p.act !== p.exp) {
-      warnings.push(`${p.type} ${p.key}: expected ${p.exp}, got ${p.act}`);
-    }
-  }
-
-  // Rebalance within each type:
-  // 1. Re-label questions between parts (e.g. extra part3 → part4)
-  // 2. If totals still differ (AI over/under-generated), trim excess questions
-  //    from the most-overrepresented parts to hit the expected total.
-  let adjusted = [...questions];
-
-  for (const [typeKey, expectedType] of [['listening', expectedL], ['reading', expectedR]] as const) {
-    const actualType = actual[typeKey];
-    const totalAct = Object.values(actualType).reduce((a, b) => a + b, 0);
-    const totalExp = Object.values(expectedType).reduce((a, b) => a + b, 0);
-
-    if (totalAct === totalExp) {
-      // Totals match — just re-label between parts
-    } else if (totalAct > totalExp) {
-      // AI generated too many questions for this type.
-      // Step 1: re-label between parts to fix per-part skew
-      // Step 2: trim the remaining excess from the most-overrepresented parts
-      const excess = totalAct - totalExp;
-      warnings.push(`${typeKey} total mismatch: expected ${totalExp}, got ${totalAct} (trimming ${excess} excess)`);
-
-      // First pass: re-label between parts (same logic as below)
-      const overflowParts: Array<{ part: string; excess: number }> = [];
-      const deficitParts: Array<{ part: string; needed: number }> = [];
-
-      for (const p of Object.keys(expectedType) as string[]) {
-        const diff = actualType[p as keyof typeof actualType] - expectedType[p as keyof typeof expectedType];
-        if (diff > 0) overflowParts.push({ part: p, excess: diff });
-        else if (diff < 0) deficitParts.push({ part: p, needed: -diff });
-      }
-
-      for (const overflow of overflowParts) {
-        let remainingExcess = overflow.excess;
-        for (const deficit of deficitParts) {
-          if (remainingExcess <= 0 || deficit.needed <= 0) continue;
-          const move = Math.min(remainingExcess, deficit.needed);
-          const overflowPartNum = parseInt(overflow.part.replace('part', ''));
-          const deficitPartNum = parseInt(deficit.part.replace('part', ''));
-
-          for (const q of adjusted) {
-            if (remainingExcess <= 0 || deficit.needed <= 0) break;
-            if (q.type === typeKey && q.part === overflowPartNum) {
-              q.part = deficitPartNum;
-              remainingExcess--;
-              deficit.needed--;
-              actualType[overflow.part as keyof typeof actualType]--;
-              actualType[deficit.part as keyof typeof actualType]++;
-            }
-          }
-        }
-      }
-
-      // Second pass: trim remaining excess from most-overrepresented parts
-      // Build a list of (part, overage) sorted descending by overage
-      const trimCandidates: Array<{ part: string; partNum: number; overage: number }> = [];
-      for (const p of Object.keys(expectedType) as string[]) {
-        const overage = actualType[p as keyof typeof actualType] - expectedType[p as keyof typeof expectedType];
-        if (overage > 0) {
-          trimCandidates.push({ part: p, partNum: parseInt(p.replace('part', '')), overage });
-        }
-      }
-      trimCandidates.sort((a, b) => b.overage - a.overage);
-
-      let remainingTrim = excess;
-      for (const candidate of trimCandidates) {
-        if (remainingTrim <= 0) break;
-        const trim = Math.min(remainingTrim, candidate.overage);
-        let trimmed = 0;
-        adjusted = adjusted.filter(q => {
-          if (trimmed >= trim) return true;
-          if (q.type === typeKey && q.part === candidate.partNum) {
-            trimmed++;
-            actualType[candidate.part as keyof typeof actualType]--;
-            return false;
-          }
-          return true;
-        });
-        remainingTrim -= trimmed;
-      }
-
-      continue;
-    } else {
-      // AI generated too few — can't add without re-generating
-      warnings.push(`${typeKey} total mismatch: expected ${totalExp}, got ${totalAct} (deficit, cannot fix without re-generation)`);
-      if (strict) {
-        throw new RetryableDistributionError(`${typeKey} deficit: expected ${totalExp}, got ${totalAct} — retrying generation`);
-      }
-      continue;
-    }
-
-    // Re-label between parts when totals match
-    const overflowParts: Array<{ part: string; excess: number }> = [];
-    const deficitParts: Array<{ part: string; needed: number }> = [];
-
-    for (const p of Object.keys(expectedType) as string[]) {
-      const diff = actualType[p as keyof typeof actualType] - expectedType[p as keyof typeof expectedType];
-      if (diff > 0) overflowParts.push({ part: p, excess: diff });
-      else if (diff < 0) deficitParts.push({ part: p, needed: -diff });
-    }
-
-    for (const overflow of overflowParts) {
-      let remainingExcess = overflow.excess;
-      for (const deficit of deficitParts) {
-        if (remainingExcess <= 0 || deficit.needed <= 0) continue;
-        const overflowPartNum = parseInt(overflow.part.replace('part', ''));
-        const deficitPartNum = parseInt(deficit.part.replace('part', ''));
-
-        for (const q of adjusted) {
-          if (remainingExcess <= 0 || deficit.needed <= 0) break;
-          if (q.type === typeKey && q.part === overflowPartNum) {
-            q.part = deficitPartNum;
-            remainingExcess--;
-            deficit.needed--;
-            actualType[overflow.part as keyof typeof actualType]--;
-            actualType[deficit.part as keyof typeof actualType]++;
-          }
-        }
-      }
-    }
-  }
-
-  // Recount from the final adjusted array to get accurate post-trimming counts
-  const finalCounts = {
-    listening: { part1: 0, part2: 0, part3: 0, part4: 0 },
-    reading: { part5: 0, part6: 0, part7: 0 },
-  };
-  for (const q of adjusted) {
-    const type = q.type as string;
-    const part = q.part as number;
-    if (type === 'listening' && part >= 1 && part <= 4) {
-      finalCounts.listening[`part${part}` as keyof typeof finalCounts.listening]++;
-    } else if (type === 'reading' && part >= 5 && part <= 7) {
-      finalCounts.reading[`part${part}` as keyof typeof finalCounts.reading]++;
-    }
-  }
-
-  // Strict-mode: reject if the trimmed/rebalanced array still doesn't match
-  const finalActL = finalCounts.listening.part1 + finalCounts.listening.part2 + finalCounts.listening.part3 + finalCounts.listening.part4;
-  const finalActR = finalCounts.reading.part5 + finalCounts.reading.part6 + finalCounts.reading.part7;
-
-  if (strict && Math.abs(finalActL - expL) > maxMismatch) {
-    if (finalActL < expL) {
-      throw new RetryableDistributionError(`listening deficit: expected ${expL}, got ${finalActL} — retrying generation`);
-    }
-    throw new Error(`Distribution mismatch (listening): expected ${expL}, got ${finalActL} — rejecting session`);
-  }
-  if (strict && Math.abs(finalActR - expR) > maxMismatch) {
-    if (finalActR < expR) {
-      throw new RetryableDistributionError(`reading deficit: expected ${expR}, got ${finalActR} — retrying generation`);
-    }
-    throw new Error(`Distribution mismatch (reading): expected ${expR}, got ${finalActR} — rejecting session`);
-  }
-
-  return { questions: adjusted, actualDist: finalCounts, warnings };
 }
