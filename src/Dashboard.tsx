@@ -265,6 +265,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                       onClick={() => {
                         setProviderId(p.id);
                         setModelId(defaultModels[p.id] || '');
+                        setApiKey('');
+                        setApiUrl(defaultUrls[p.id] || '');
                       }}
                       className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all text-center ${
                         providerId === p.id

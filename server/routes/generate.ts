@@ -200,7 +200,7 @@ Return ONLY valid JSON: { "questions": [...] }`;
             sessionStatus.set(activeSessionId, { phase: 'generating', progress: 0, message: `Retry ${validationAttempt}/${maxValidationRetries}: regenerating questions...` });
             sendSSE(activeSessionId, { type: 'progress', phase: 'retrying', progress: 0, message: `Retrying (${validationAttempt}/${maxValidationRetries}): AI produced too few questions, regenerating...` });
             // Add delay between retries to avoid rate limiting and give AI time to reset
-            const delayMs = validationAttempt * 500;
+            const delayMs = validationAttempt * 2000;
             console.log(`[Retry] Waiting ${delayMs}ms before retry ${validationAttempt + 1}...`);
             await new Promise(resolve => setTimeout(resolve, delayMs));
             continue;
