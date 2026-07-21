@@ -48,7 +48,7 @@ const SourceOption: React.FC<SourceOptionProps> = ({ icon, title, desc, active, 
 const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
   const [count, setCount] = useState(10);
   const [source, setSource] = useState('random');
-  const [webUrl, setWebUrl] = useState('https://news.google.com/');
+  const [webUrl, setWebUrl] = useState('https://en.wikipedia.org/wiki/TOEIC');
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
