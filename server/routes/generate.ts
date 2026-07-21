@@ -66,7 +66,7 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
       let activeSessionId = session_id;
       let activeSessionDir = sessionDir;
       let activeAudioDir = audioDir;
-      const maxValidationRetries = 3;
+      const maxValidationRetries = 5;
 
       for (let validationAttempt = 1; validationAttempt <= maxValidationRetries; validationAttempt++) {
         try {
@@ -90,6 +90,8 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
 
             console.log(`[AI] Fallback chain: ${chain.map(c => c.id).join(' → ')}`);
 
+            const dist = getQuestionDistribution(questionCount);
+
             while (finalQuestions.length < questionCount && attempts < maxAttempts) {
               attempts++;
               const remainingCount = questionCount - finalQuestions.length;
@@ -98,9 +100,10 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
 
               const part1Count = getPart1Count(questionCount, startId);
               const part1Instruction = buildPart1Instruction(startId, currentChunkSize, part1Count, questionCount);
-              const dist = getQuestionDistribution(questionCount);
 
-              const prompt = `Generate a JSON object with a "questions" array containing EXACTLY ${currentChunkSize} TOEIC questions starting at ID ${startId}.
+              const prompt = `CRITICAL: You MUST generate EXACTLY ${currentChunkSize} TOEIC questions. Do NOT generate fewer or more. Count your output carefully before returning.
+
+Generate a JSON object with a "questions" array containing EXACTLY ${currentChunkSize} TOEIC questions starting at ID ${startId}.
 
 DISTRIBUTION (based on real TOEIC ratios, 50% listening / 50% reading):
 - Listening Part 1 (Photographs): ${dist.listening.part1} questions — photo + 4 audio descriptions, empty transcript
@@ -111,7 +114,13 @@ DISTRIBUTION (based on real TOEIC ratios, 50% listening / 50% reading):
 - Reading Part 6 (Text Completion): ${dist.reading.part6} questions — passage + 4 options
 - Reading Part 7 (Reading Comprehension): ${dist.reading.part7} questions — passage + 4 options
 ${part1Instruction}
-IMPORTANT: You MUST generate exactly the number of questions listed above for EACH part. Do NOT skip any part or generate fewer questions than specified. The exam requires a strict 50/50 listening/reading split. You must produce all listening questions (Parts 1-4) AND all reading questions (Parts 5-7) in every response. Do NOT generate only listening questions and stop — you MUST include reading questions too.
+MANDATORY REQUIREMENTS:
+1. You MUST generate EXACTLY the number of questions listed above for EACH part.
+2. You MUST include BOTH listening questions (Parts 1-4) AND reading questions (Parts 5-7).
+3. Do NOT skip any part. Do NOT generate fewer questions than specified.
+4. Do NOT generate only listening questions and stop — you MUST include reading questions too.
+5. The exam requires a strict 50/50 listening/reading split.
+6. Before returning, COUNT your questions: you must have exactly ${currentChunkSize} total.
 CRITICAL: BASE ALL QUESTIONS ON THIS SOURCE TEXT. Use vocabulary, topics, names, companies, and scenarios directly from this text:
 SOURCE TEXT:
 ${seedText || 'International business environment.'}
@@ -190,6 +199,10 @@ Return ONLY valid JSON: { "questions": [...] }`;
             fs.mkdirSync(activeAudioDir, { recursive: true });
             sessionStatus.set(activeSessionId, { phase: 'generating', progress: 0, message: `Retry ${validationAttempt}/${maxValidationRetries}: regenerating questions...` });
             sendSSE(activeSessionId, { type: 'progress', phase: 'retrying', progress: 0, message: `Retrying (${validationAttempt}/${maxValidationRetries}): AI produced too few questions, regenerating...` });
+            // Add delay between retries to avoid rate limiting and give AI time to reset
+            const delayMs = validationAttempt * 500;
+            console.log(`[Retry] Waiting ${delayMs}ms before retry ${validationAttempt + 1}...`);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
             continue;
           }
           const msg = err instanceof Error ? err.message : String(err);

@@ -112,7 +112,7 @@ def wait_completion(session_id, timeout=120):
                     return False, data.get("message", "error")
             except:
                 pass
-        time.sleep(2)
+        time.sleep(1)
     return False, "timeout"
 
 

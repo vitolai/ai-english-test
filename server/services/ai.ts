@@ -412,7 +412,7 @@ export async function generateWithFallback(
   chain: ProviderEntry[],
   schema: z.ZodSchema,
   prompt: string,
-  maxRetries = 2,
+  maxRetries = 5,
 ) {
   let lastError: Error | undefined;
 
@@ -446,7 +446,7 @@ export async function streamWithFallback(
   chain: ProviderEntry[],
   schema: z.ZodSchema,
   prompt: string,
-  maxRetries = 2,
+  maxRetries = 5,
 ) {
   let lastError: Error | undefined;
 
