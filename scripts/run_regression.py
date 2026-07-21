@@ -77,11 +77,11 @@ def get_real_timeout(q):
     Mappings below provide ~2x headroom on each tier.
     """
     mapping = {
-        10: 120,
-        20: 300,
-        50: 600,
-        100: 1200,
-        200: 1800,
+        10: 180,
+        20: 600,
+        50: 900,
+        100: 1800,
+        200: 2400,
     }
     if q in mapping:
         return mapping[q]
