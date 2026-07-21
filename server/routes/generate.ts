@@ -72,8 +72,6 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
         try {
           req.setTimeout(0);
           let finalQuestions: Array<Record<string, unknown>> = [];
-          let attempts = 0;
-          const maxAttempts = Math.ceil(questionCount / 10) + 5;
 
           const isTestMode = apiKey && apiKey.toLowerCase().includes('test');
 
@@ -91,36 +89,29 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
             console.log(`[AI] Fallback chain: ${chain.map(c => c.id).join(' → ')}`);
 
             const dist = getQuestionDistribution(questionCount);
+            const listeningCount = dist.listening.part1 + dist.listening.part2 + dist.listening.part3 + dist.listening.part4;
+            const readingCount = dist.reading.part5 + dist.reading.part6 + dist.reading.part7;
 
-            while (finalQuestions.length < questionCount && attempts < maxAttempts) {
-              attempts++;
-              const remainingCount = questionCount - finalQuestions.length;
-              const currentChunkSize = Math.min(20, remainingCount);
-              const startId = finalQuestions.length + 1;
+            // PHASE 1: Generate listening questions (Parts 1-4 only)
+            console.log(`[AI] Phase 1: Generating ${listeningCount} listening questions`);
+            setStatus(activeSessionId, {
+              phase: 'generating',
+              progress: 10,
+              message: `Phase 1: Generating ${listeningCount} listening questions...`,
+            });
 
-              const part1Count = getPart1Count(questionCount, startId);
-              const part1Instruction = buildPart1Instruction(startId, currentChunkSize, part1Count, questionCount);
+            const listeningPrompt = `CRITICAL INSTRUCTION: You are generating ONLY listening questions. Do NOT generate ANY reading questions (no Part 5, 6, or 7). Generate EXACTLY ${listeningCount} listening questions. Count your output carefully.
 
-              const prompt = `CRITICAL: You MUST generate EXACTLY ${currentChunkSize} TOEIC questions. Do NOT generate fewer or more. Count your output carefully before returning.
+Generate a JSON object with a "questions" array containing EXACTLY ${listeningCount} TOEIC LISTENING questions starting at ID 1.
 
-Generate a JSON object with a "questions" array containing EXACTLY ${currentChunkSize} TOEIC questions starting at ID ${startId}.
+LISTENING DISTRIBUTION:
+- Part 1 (Photographs): ${dist.listening.part1} questions — photo + 4 audio descriptions, empty transcript
+- Part 2 (Question-Response): ${dist.listening.part2} questions — spoken question in transcript + 3 responses (NOT 4), empty question field
+- Part 3 (Conversations): ${dist.listening.part3} questions — conversation in transcript + question text + 4 options
+- Part 4 (Talks): ${dist.listening.part4} questions — talk in transcript + question text + 4 options
 
-DISTRIBUTION (based on real TOEIC ratios, 50% listening / 50% reading):
-- Listening Part 1 (Photographs): ${dist.listening.part1} questions — photo + 4 audio descriptions, empty transcript
-- Listening Part 2 (Question-Response): ${dist.listening.part2} questions — spoken question in transcript + 3 responses (NOT 4), empty question field
-- Listening Part 3 (Conversations): ${dist.listening.part3} questions — conversation in transcript + question text + 4 options
-- Listening Part 4 (Talks): ${dist.listening.part4} questions — talk in transcript + question text + 4 options
-- Reading Part 5 (Incomplete Sentences): ${dist.reading.part5} questions — fill-in-the-blank + 4 options
-- Reading Part 6 (Text Completion): ${dist.reading.part6} questions — passage + 4 options
-- Reading Part 7 (Reading Comprehension): ${dist.reading.part7} questions — passage + 4 options
-${part1Instruction}
-MANDATORY REQUIREMENTS:
-1. You MUST generate EXACTLY the number of questions listed above for EACH part.
-2. You MUST include BOTH listening questions (Parts 1-4) AND reading questions (Parts 5-7).
-3. Do NOT skip any part. Do NOT generate fewer questions than specified.
-4. Do NOT generate only listening questions and stop — you MUST include reading questions too.
-5. The exam requires a strict 50/50 listening/reading split.
-6. Before returning, COUNT your questions: you must have exactly ${currentChunkSize} total.
+FORBIDDEN: Do NOT include any questions with type "reading" or parts 5, 6, 7. ONLY type "listening" with parts 1, 2, 3, 4.
+${buildPart1Instruction(1, dist.listening.part1, getPart1Count(questionCount, 1), questionCount)}
 CRITICAL: BASE ALL QUESTIONS ON THIS SOURCE TEXT. Use vocabulary, topics, names, companies, and scenarios directly from this text:
 SOURCE TEXT:
 ${seedText || 'International business environment.'}
@@ -128,34 +119,61 @@ END SOURCE TEXT.
 The questions MUST reference topics, vocabulary, or scenarios from the source text above. Do NOT generate generic questions unrelated to the source text.
 Return ONLY valid JSON: { "questions": [...] }`;
 
-              const progress = Math.round((finalQuestions.length / questionCount) * 100);
-              setStatus(activeSessionId, {
-                phase: 'generating',
-                progress,
-                message: `Chunk ${attempts}: Q${startId}–${startId + currentChunkSize - 1} (${finalQuestions.length}/${questionCount})`,
-              });
-
-              try {
-                const { object: chunkData } = await generateWithFallback(chain, ExamSchema, prompt, 2);
-
-                if ((chunkData as { questions?: unknown[] }).questions?.length) {
-                  const questions = (chunkData as { questions: Array<Record<string, unknown>> }).questions;
-                  console.log(`[AI] Received ${questions.length} questions`);
-                  const newQuestions = questions.slice(0, remainingCount).map(q => {
-                    if (q.type === 'listening') {
-                      return { ...q, audio: `sessions/${activeSessionId}/audio/q${q.id}.mp3` };
-                    }
-                    return q;
-                  });
-                  finalQuestions = [...finalQuestions, ...newQuestions];
-                } else {
-                  console.warn(`[AI] Attempt ${attempts}: empty or invalid question array`);
-                }
-              } catch (err) {
-                const msg = err instanceof Error ? err.message : String(err);
-                console.error('[AI] Chunk generation failed:', msg);
-                if (attempts >= maxAttempts && finalQuestions.length === 0) throw err;
+            let listeningQuestions: Array<Record<string, unknown>> = [];
+            try {
+              const { object: listeningData } = await generateWithFallback(chain, ExamSchema, listeningPrompt, 2);
+              if ((listeningData as { questions?: unknown[] }).questions?.length) {
+                const questions = (listeningData as { questions: Array<Record<string, unknown>> }).questions;
+                const onlyListening = questions.filter(q => q.type === 'listening');
+                console.log(`[AI] Phase 1: received ${questions.length} total, ${onlyListening.length} listening`);
+                listeningQuestions = onlyListening.slice(0, listeningCount).map(q => {
+                  return { ...q, audio: `sessions/${activeSessionId}/audio/q${q.id}.mp3` };
+                });
               }
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              console.error('[AI] Phase 1 (listening) failed:', msg);
+            }
+
+            finalQuestions = [...listeningQuestions];
+
+            // PHASE 2: Generate reading questions (Parts 5-7 only)
+            const readingStartId = listeningQuestions.length + 1;
+            console.log(`[AI] Phase 2: Generating ${readingCount} reading questions starting at ID ${readingStartId}`);
+            setStatus(activeSessionId, {
+              phase: 'generating',
+              progress: 50,
+              message: `Phase 2: Generating ${readingCount} reading questions...`,
+            });
+
+            const readingPrompt = `CRITICAL INSTRUCTION: You are generating ONLY reading questions. Do NOT generate ANY listening questions (no Part 1, 2, 3, or 4). Generate EXACTLY ${readingCount} reading questions. Count your output carefully.
+
+Generate a JSON object with a "questions" array containing EXACTLY ${readingCount} TOEIC READING questions starting at ID ${readingStartId}.
+
+READING DISTRIBUTION:
+- Part 5 (Incomplete Sentences): ${dist.reading.part5} questions — fill-in-the-blank + 4 options
+- Part 6 (Text Completion): ${dist.reading.part6} questions — passage + 4 options
+- Part 7 (Reading Comprehension): ${dist.reading.part7} questions — passage + 4 options
+
+FORBIDDEN: Do NOT include any questions with type "listening" or parts 1, 2, 3, 4. ONLY type "reading" with parts 5, 6, 7.
+CRITICAL: BASE ALL QUESTIONS ON THIS SOURCE TEXT. Use vocabulary, topics, names, companies, and scenarios directly from this text:
+SOURCE TEXT:
+${seedText || 'International business environment.'}
+END SOURCE TEXT.
+The questions MUST reference topics, vocabulary, or scenarios from the source text above. Do NOT generate generic questions unrelated to the source text.
+Return ONLY valid JSON: { "questions": [...] }`;
+
+            try {
+              const { object: readingData } = await generateWithFallback(chain, ExamSchema, readingPrompt, 2);
+              if ((readingData as { questions?: unknown[] }).questions?.length) {
+                const questions = (readingData as { questions: Array<Record<string, unknown>> }).questions;
+                const onlyReading = questions.filter(q => q.type === 'reading');
+                console.log(`[AI] Phase 2: received ${questions.length} total, ${onlyReading.length} reading`);
+                finalQuestions = [...finalQuestions, ...onlyReading.slice(0, readingCount)];
+              }
+            } catch (err) {
+              const msg = err instanceof Error ? err.message : String(err);
+              console.error('[AI] Phase 2 (reading) failed:', msg);
             }
           }
 
