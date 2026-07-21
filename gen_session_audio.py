@@ -90,6 +90,13 @@ GENERIC_ROLE_LABELS = {
 # name is NEVER spoken.
 SPEAKER_TURN_PARSE_RE = re.compile(r"^([A-Z][a-zA-Z]{1,}):\s*(.*)", re.DOTALL)
 
+_OPTION_LABEL_RE = re.compile(r"^[A-D][.)]\s+")
+
+
+def _strip_option_label(text):
+    """Strip leading A. B. C. D. label from option text to avoid duplication."""
+    return _OPTION_LABEL_RE.sub("", text, count=1).strip()
+
 
 def _voice_for_speaker(speaker, alternate_index):
     """Pick a voice for a speaker label.
@@ -196,6 +203,7 @@ async def main():
                 parts = []
                 for i, opt in enumerate(options):
                     label = chr(65 + i)  # A, B, C, D
+                    opt = _strip_option_label(opt)
                     parts.append("{}. {}".format(label, opt))
                 text = ". ".join(parts)
         elif q.get("part") == 2:
@@ -206,6 +214,7 @@ async def main():
                 parts = [question]
                 for i, opt in enumerate(options[:3]):
                     label = chr(65 + i)
+                    opt = _strip_option_label(opt)
                     parts.append("{}. {}".format(label, opt))
                 text = ". ".join(parts)
             elif question:

@@ -322,6 +322,34 @@ export function ensurePart6Questions(questions: Array<Record<string, unknown>>):
   });
 }
 
+// Strip HTML tags from a string: replaces <br>, <br/>, <br /> with a space,
+// then removes all remaining HTML tags.
+function stripHtml(raw: string): string {
+  return raw
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .trim();
+}
+
+export function ensurePart7Questions(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  return questions.map(q => {
+    if (q['part'] === 7 && q['type'] === 'reading') {
+      if (q['question'] && typeof q['question'] === 'string') {
+        q['question'] = stripHtml(q['question']);
+      }
+      if (q['passage'] && typeof q['passage'] === 'string') {
+        q['passage'] = stripHtml(q['passage']);
+      }
+      if (Array.isArray(q['options'])) {
+        q['options'] = (q['options'] as string[]).map(opt =>
+          typeof opt === 'string' ? stripHtml(opt) : opt
+        );
+      }
+    }
+    return q;
+  });
+}
+
 
 // Normalize a Part 1 image field to a bare, valid Unsplash photo ID.
 // The AI provider sometimes returns IDs already prefixed with 'photo'/'photo-'
