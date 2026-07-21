@@ -70,6 +70,35 @@ def generate_real(q, api_key):
         return None
 
 
+def get_real_timeout(q):
+    """Scale-to-timeout mapping for real-AI (OpenRouter free tier).
+
+    Benchmarks: 10Q~47s, 20Q~110s, 50Q~158s, 100Q~331s, 200Q~666s.
+    Mappings below provide ~2x headroom on each tier.
+    """
+    mapping = {
+        10: 120,
+        20: 300,
+        50: 600,
+        100: 1200,
+        200: 1800,
+    }
+    if q in mapping:
+        return mapping[q]
+    # For unlisted scales, interpolate linearly between nearest tiers
+    tiers = sorted(mapping.keys())
+    if q < tiers[0]:
+        return mapping[tiers[0]]
+    if q > tiers[-1]:
+        return mapping[tiers[-1]]
+    for i in range(len(tiers) - 1):
+        lo, hi = tiers[i], tiers[i + 1]
+        if lo <= q <= hi:
+            t = (q - lo) / (hi - lo)
+            return int(mapping[lo] + t * (mapping[hi] - mapping[lo]))
+    return 900
+
+
 def wait_completion(session_id, timeout=120):
     start = time.time()
     while time.time() - start < timeout:
@@ -394,10 +423,8 @@ def run_scale(q, real=False):
     print("  Session: {}".format(sid))
 
     start = time.time()
-    # Real-AI durations per project benchmarks: 10Q~47s, 20Q~110s, 50Q~158s,
-    # 100Q~331s, 200Q~666s. Allow comfortable headroom.
     if real:
-        timeout = max(900, q * 6)
+        timeout = get_real_timeout(q)
     else:
         timeout = 600 if q >= 100 else 180
     ok, msg = wait_completion(sid, timeout=timeout)

@@ -1,0 +1,22 @@
+2026-07-21 06:32:40,209 [INFO] ======================================================================
+2026-07-21 06:32:40,209 [INFO] TEST: test_exam_flow.py — Full Exam Flow
+2026-07-21 06:32:40,209 [INFO] RUN_ID: 20260721_063240
+2026-07-21 06:32:40,209 [INFO] ======================================================================
+2026-07-21 06:32:42,450 [INFO] [CP01] Navigating to dashboard...
+2026-07-21 06:32:44,782 [INFO] SCREENSHOT 1: 01_dashboard_loaded.png
+2026-07-21 06:32:44,782 [INFO] [CP01] PASS — Dashboard heading visible
+2026-07-21 06:32:44,782 [INFO] [CP02] Selecting 10 questions...
+2026-07-21 06:32:45,331 [INFO] SCREENSHOT 2: 02_10_selected.png
+2026-07-21 06:32:45,331 [INFO] [CP02] PASS — 10-question count selected
+2026-07-21 06:32:45,332 [INFO] [CP03] Selecting Random source...
+2026-07-21 06:32:46,204 [INFO] SCREENSHOT 3: 03_random_selected.png
+2026-07-21 06:32:46,204 [INFO] [CP03] PASS — Random source selected
+2026-07-21 06:32:46,204 [INFO] [CP04] Clicking START EXAM...
+2026-07-21 06:32:56,418 [INFO] SCREENSHOT 4: 04_ERROR.png
+2026-07-21 06:32:56,419 [ERROR] TEST FAILED: Page.wait_for_selector: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator("h2:has-text(\"AI Configuration\")") to be visible
+
+2026-07-21 06:32:56,419 [INFO] ======================================================================
+2026-07-21 06:32:56,419 [INFO] RESULT: FAIL
+2026-07-21 06:32:56,419 [INFO] ======================================================================

@@ -110,6 +110,7 @@ DISTRIBUTION (based on real TOEIC ratios, 50% listening / 50% reading):
 - Reading Part 6 (Text Completion): ${dist.reading.part6} questions — passage + 4 options
 - Reading Part 7 (Reading Comprehension): ${dist.reading.part7} questions — passage + 4 options
 ${part1Instruction}
+IMPORTANT: You MUST generate exactly the number of questions listed above for EACH part. Do NOT skip any part or generate fewer questions than specified. The exam requires a strict 50/50 listening/reading split. You must produce all listening questions (Parts 1-4) AND all reading questions (Parts 5-7) in every response. Do NOT generate only listening questions and stop — you MUST include reading questions too.
 CRITICAL: BASE ALL QUESTIONS ON THIS SOURCE TEXT. Use vocabulary, topics, names, companies, and scenarios directly from this text:
 SOURCE TEXT:
 ${seedText || 'International business environment.'}

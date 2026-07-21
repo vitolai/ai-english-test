@@ -1,0 +1,16 @@
+2026-07-21 05:26:58,833 [INFO] ======================================================================
+2026-07-21 05:26:58,833 [INFO] TEST: test_review_page.py — Score Page Review
+2026-07-21 05:26:58,833 [INFO] RUN_ID: 20260721_052658
+2026-07-21 05:26:58,833 [INFO] ======================================================================
+2026-07-21 05:27:00,926 [INFO] Setting up: starting exam...
+2026-07-21 05:27:03,454 [INFO] SCREENSHOT 1: 01_ERROR.png
+2026-07-21 05:27:03,454 [ERROR] TEST FAILED: Locator.click: Error: strict mode violation: locator(".grid.grid-cols-6 button").filter(has_text="10") resolved to 2 elements:
+    1) <button class="py-4 rounded-2xl font-black transition-all bg-blue-600 text-white shadow-lg shadow-blue-200 transform scale-105">10</button> aka get_by_role("button", name="10", exact=True)
+    2) <button class="py-4 rounded-2xl font-black transition-all bg-white border-2 border-slate-100 text-slate-400 hover:border-blue-200">100</button> aka get_by_role("button", name="100")
+
+Call log:
+  - waiting for locator(".grid.grid-cols-6 button").filter(has_text="10")
+
+2026-07-21 05:27:03,454 [INFO] ======================================================================
+2026-07-21 05:27:03,455 [INFO] RESULT: FAIL
+2026-07-21 05:27:03,455 [INFO] ======================================================================
