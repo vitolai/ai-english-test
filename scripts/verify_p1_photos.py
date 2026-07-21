@@ -1,69 +1,47 @@
 #!/usr/bin/env python3
-"""Extract photo IDs from PART1_DATA in server/services/ai.ts and test each with Unsplash."""
-
+"""Quick verification: extract all image IDs from PART1_DATA, test each, report any still-broken."""
 import re
 import subprocess
 import sys
+import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
 
-AI_TS = Path("server/services/ai.ts")
-CONTENT = AI_TS.read_text()
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+AI_TS_PATH = os.path.join(PROJECT_ROOT, "server", "services", "ai.ts")
 
-# Extract all image IDs from the PART1_DATA array
-part1_ids = re.findall(r"image:\s+'([^']+)'", CONTENT)
-unique_ids = list(dict.fromkeys(part1_ids))
 
-# FALLBACK_PHOTO_IDS section
-fallback_start = CONTENT.index("const FALLBACK_PHOTO_IDS")
-fallback_section = CONTENT[fallback_start:]
-fallback_end = fallback_section.index("];")
-fallback_raw = fallback_section[:fallback_end]
-fallback_ids = re.findall(r"'([^']+)'", fallback_raw)
-
-def test_id(photo_id):
-    url = f"https://images.unsplash.com/photo-{photo_id}?w=100"
+def test_photo_id(photo_id, timeout=10):
+    url = f"https://images.unsplash.com/photo-{photo_id}?w=400"
     try:
         result = subprocess.run(
-            ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", url, "--max-time", "5"],
-            capture_output=True, text=True, timeout=10
+            ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", str(timeout), url],
+            capture_output=True, text=True, timeout=timeout + 5
         )
-        code = result.stdout.strip()
-        return photo_id, code, ""
-    except Exception as e:
-        return photo_id, "ERR", str(e)
+        return result.stdout.strip() == "200"
+    except Exception:
+        return False
 
-# Test all unique IDs
-results = {}
-print(f"Testing {len(unique_ids)} unique photo IDs from PART1_DATA...")
-with ThreadPoolExecutor(max_workers=10) as executor:
-    futures = {executor.submit(test_id, pid): pid for pid in unique_ids}
-    for future in as_completed(futures):
-        pid, code, err = future.result()
-        results[pid] = (code, err)
 
-print("\nResults:")
-print("-"*80)
+with open(AI_TS_PATH) as f:
+    content = f.read()
+
+match = re.search(r"const PART1_DATA:.*?=\s*\[(.*?)\];", content, re.DOTALL)
+ids = re.findall(r"image:\s*'([^']+)'", match.group(1))
+unique = list(set(ids))
+print(f"Verifying {len(unique)} unique IDs from PART1_DATA...")
+
 broken = []
-working = []
-for pid in unique_ids:
-    code, err = results[pid]
-    if code == "200":
-        working.append(pid)
-        print(f"  OK  {code} {pid}")
-    else:
-        broken.append(pid)
-        print(f"  BROKEN {code} {pid} {err}")
-
-print(f"\nTotal unique: {len(unique_ids)}")
-print(f"Working: {len(working)}")
-print(f"Broken: {len(broken)}")
+with ThreadPoolExecutor(max_workers=20) as ex:
+    futs = {ex.submit(test_photo_id, pid): pid for pid in unique}
+    for f in as_completed(futs):
+        pid = futs[f]
+        if not f.result():
+            broken.append(pid)
 
 if broken:
-    print("\nBroken IDs:")
-    for pid in broken:
-        print(f"  {pid}")
+    print(f"STILL BROKEN ({len(broken)}):")
+    for b in sorted(broken):
+        print(f"  - {b}")
     sys.exit(1)
 else:
-    print("\nAll photos verified OK!")
-    sys.exit(0)
+    print("All IDs verified OK!")

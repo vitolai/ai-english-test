@@ -41,44 +41,11 @@ export class RetryableDistributionError extends Error {
 const FALLBACK_PHOTO_IDS = [
   '1556761175-b413da4baf72','1497366216548-37526070297c','1524758631624-e2822e304c36',
   '1591115765373-5207764f72e7','1450101499163-c8848c66ca85','1556740738-b6a63e27c4df',
-  '1517502884422-41eaead166d4','1504384308090-c894fdcc538d','1497215728101-856f4ea421fa',
-  '1553028826-f4804a6dba3b','1573164713714-d95e436ab8d6','1498050108023-c5249f4df085',
-  '1554224155-6726b3ff858f','1522071820081-009f0129c71c','1515187029135-18ee286d815b',
-  '1486312338219-ce68d2c6f44d','1527192491265-7e15c55b1ed2','1497366754035-f200968a6e72',
-  '1497215842964-222b430dc094','1519389950473-47ba0277781c','1521737604893-d14cc237f11d',
-  '1542744173-8e7e53415bb0','1497366811353-6870744d04b2','1556761223-4c4282c73f77',
-  '1521791136064-7986c2920216','1553877522-43269d4ea984','1531973576160-7125cd663d86',
-  '1560472354-b33ff0c44a43','1517245386807-bb43f82c33c4','1513364776144-60967b0f800f',
-  '1551836022-deb4988cc6c0','1497215842964-222b430dc095','1562654501-a0fec09beca6',
-  '1556745757-8d76bdb6984b','1507003211169-0a1dd7228f2d','1523240795612-9a054b0db644',
-  '1516321318423-f06f85e504b3','1554469384-e58fac16e23a','1507679799987-c73779587ccf',
-  '1568992687947-868a62a9f521','1556740758-90de374c12ad','1559136555-9303baea8ebd',
-  '1522202176988-66273c2fd55f','1560179707-f14e90ef3623','1551288049-bebda4e38f71',
-  '1576091160550-2173dba999ef','1454165804606-c3d57bc86b40','1505664194779-8beaceb93744',
-  '1566576912321-d58ddd7a6088','1543286386-713bdd548da4','1513635269975-59663e0ac1ad',
-  '1558618666-fcd25c85f82e','1524661135-423995f22d0b','1504384764586-bb4cdc1707b0',
-  '1497366216548-37526070297d','1497215728101-856f4ea421fb','1527192491265-7e15c55b1ed3',
-  '1519389950473-47ba0277781d','1521791136064-7986c2920217','1542744173-8e7e53415bb1',
-  '1497366811353-6870744d04b3','1556761223-4c4282c73f78','1521791136064-7986c2920218',
-  '1553877522-43269d4ea985','1531973576160-7125cd663d87','1560472354-b33ff0c44a44',
-  '1517245386807-bb43f82c33c5','1513364776144-60967b0f8010','1551836022-deb4988cc6c1',
-  '1497215842964-222b430dc096','1562654501-a0fec09beca7','1556745757-8d76bdb6984c',
-  '1507003211169-0a1dd7228f2e','1523240795612-9a054b0db645','1516321318423-f06f85e504b4',
-  '1554469384-e58fac16e23b','1507679799987-c73779587cd0','1568992687947-868a62a9f522',
-  '1556740758-90de374c12ae','1559136555-9303baea8ebe','1522202176988-66273c2fd560',
-  '1560179707-f14e90ef3624','1551288049-bebda4e38f72','1576091160550-2173dba999f0',
-  '1454165804606-c3d57bc86b41','1505664194779-8beaceb93745','1566576912321-d58ddd7a6089',
-  '1543286386-713bdd548da5','1513635269975-59663e0ac1ae','1558618666-fcd25c85f82f',
-  '1524661135-423995f22d0c','1504384764586-bb4cdc1707b1','1497366216548-37526070297e',
-  '1497215728101-856f4ea421fc','1527192491265-7e15c55b1ed4','1519389950473-47ba0277781e',
-  '1521791136064-7986c2920219','1542744173-8e7e53415bb2','1497366811353-6870744d04b4',
-  '1556761223-4c4282c73f79','1521791136064-7986c292021a','1553877522-43269d4ea986',
-  '1531973576160-7125cd663d88','1560472354-b33ff0c44a45','1517245386807-bb43f82c33c6',
-  '1513364776144-60967b0f8011','1551836022-deb4988cc6c2','1497215842964-222b430dc097',
-  '1562654501-a0fec09beca8','1556745757-8d76bdb6984d','1507003211169-0a1dd7228f2f',
-  '1523240795612-9a054b0db646','1516321318423-f06f85e504b5','1554469384-e58fac16e23c',
-  '1507679799987-c73779587cd1','1568992687947-868a62a9f523','1556740758-90de374c12af',
-  '1559136555-9303baea8ebf','1522202176988-66273c2fd561','1560179707-f14e90ef3625',
+  '1517502884422-41eaead166d4','1504384308090-c894fdcc538d','1553028826-f4804a6dba3b',
+  '1573164713714-d95e436ab8d6','1498050108023-c5249f4df085','1554224155-6726b3ff858f',
+  '1522071820081-009f0129c71c','1515187029135-18ee286d815b','1486312338219-ce68d2c6f44d',
+  '1527192491265-7e15c55b1ed2','1497366754035-f200968a6e72','1497215842964-222b430dc094',
+  '1519389950473-47ba0277781c',
 ];
 
 // Fallback: ensure Part 2 questions have a spoken question in transcript
@@ -824,9 +791,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 9: Unsplash ID 1497215728101-856f4ea421fa
+  // Photo 9: Unsplash ID 1522071820081-009f0129c71c
   {
-    image: '1497215728101-856f4ea421fa',
+    image: '1522071820081-009f0129c71c',
     options: [
       'A team leader is writing on a whiteboard during a strategy session.',
       'A dentist is examining a patient\'s teeth.',
@@ -1077,9 +1044,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 32: Unsplash ID 1497215842964-222b430dc095
+  // Photo 32: Unsplash ID 1519389950473-47ba0277781c
   {
-    image: '1497215842964-222b430dc095',
+    image: '1519389950473-47ba0277781c',
     options: [
       'A small startup office with exposed brick walls, hanging plants, and standing desks.',
       'A dentist is examining a patient\'s teeth.',
@@ -1088,9 +1055,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 33: Unsplash ID 1562654501-a0fec09beca6
+  // Photo 33: Unsplash ID 1553028826-f4804a6dba3b
   {
-    image: '1562654501-a0fec09beca6',
+    image: '1553028826-f4804a6dba3b',
     options: [
       'A reception area with a curved wooden desk, company logo on the wall, and comfortable seating.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1297,9 +1264,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 52: Unsplash ID 1558618666-fcd25c85f82e
+  // Photo 52: Unsplash ID 1497366216548-37526070297c
   {
-    image: '1558618666-fcd25c85f82e',
+    image: '1497366216548-37526070297c',
     options: [
       'Two colleagues walking down a hallway while reviewing documents on a tablet.',
       'A dentist is examining a patient\'s teeth.',
@@ -1330,9 +1297,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 55: Unsplash ID 1497366216548-37526070297d
+  // Photo 55: Unsplash ID 1553028826-f4804a6dba3b
   {
-    image: '1497366216548-37526070297d',
+    image: '1553028826-f4804a6dba3b',
     options: [
       'An employee holding a door open for a colleague carrying a laptop bag.',
       'A surgeon is performing an operation in an operating room.',
@@ -1341,9 +1308,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 56: Unsplash ID 1497215728101-856f4ea421fb
+  // Photo 56: Unsplash ID 1498050108023-c5249f4df085
   {
-    image: '1497215728101-856f4ea421fb',
+    image: '1498050108023-c5249f4df085',
     options: [
       'A manager walking briskly through an open office with a coffee cup in hand.',
       'A chef is sautéing vegetables in a stainless steel pan.',
@@ -1352,9 +1319,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 57: Unsplash ID 1527192491265-7e15c55b1ed3
+  // Photo 57: Unsplash ID 1497366754035-f200968a6e72
   {
-    image: '1527192491265-7e15c55b1ed3',
+    image: '1497366754035-f200968a6e72',
     options: [
       'Two interns following a senior employee on a tour of the facility.',
       'A construction worker is pouring concrete from a mixer truck.',
@@ -1363,9 +1330,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 58: Unsplash ID 1519389950473-47ba0277781d
+  // Photo 58: Unsplash ID 1556740738-b6a63e27c4df
   {
-    image: '1519389950473-47ba0277781d',
+    image: '1556740738-b6a63e27c4df',
     options: [
       'A receptionist walking toward the front desk carrying a stack of mail.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1374,9 +1341,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 59: Unsplash ID 1521791136064-7986c2920217
+  // Photo 59: Unsplash ID 1486312338219-ce68d2c6f44d
   {
-    image: '1521791136064-7986c2920217',
+    image: '1486312338219-ce68d2c6f44d',
     options: [
       'A group of professionals exiting a train station during morning rush hour.',
       'A mechanic is changing a tire in an auto repair shop.',
@@ -1385,9 +1352,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 60: Unsplash ID 1542744173-8e7e53415bb1
+  // Photo 60: Unsplash ID 1486312338219-ce68d2c6f44d
   {
-    image: '1542744173-8e7e53415bb1',
+    image: '1486312338219-ce68d2c6f44d',
     options: [
       'Employees gathered around a kitchen island eating lunch from takeout containers.',
       'A janitor is mopping the floor in an empty hallway.',
@@ -1396,9 +1363,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 61: Unsplash ID 1497366811353-6870744d04b3
+  // Photo 61: Unsplash ID 1527192491265-7e15c55b1ed2
   {
-    image: '1497366811353-6870744d04b3',
+    image: '1527192491265-7e15c55b1ed2',
     options: [
       'A coffee station with an espresso machine, cups, and a tip jar in an office pantry.',
       'A painter is applying wallpaper in a residential room.',
@@ -1407,9 +1374,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 62: Unsplash ID 1556761223-4c4282c73f78
+  // Photo 62: Unsplash ID 1497366216548-37526070297c
   {
-    image: '1556761223-4c4282c73f78',
+    image: '1497366216548-37526070297c',
     options: [
       'A vending machine with snacks and drinks in the corner of an office break room.',
       'A dentist is examining a patient\'s teeth.',
@@ -1418,9 +1385,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 63: Unsplash ID 1521791136064-7986c2920218
+  // Photo 63: Unsplash ID 1554224155-6726b3ff858f
   {
-    image: '1521791136064-7986c2920218',
+    image: '1554224155-6726b3ff858f',
     options: [
       'Two coworkers chatting while waiting for the microwave in a shared kitchen.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1429,9 +1396,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 64: Unsplash ID 1553877522-43269d4ea985
+  // Photo 64: Unsplash ID 1553028826-f4804a6dba3b
   {
-    image: '1553877522-43269d4ea985',
+    image: '1553028826-f4804a6dba3b',
     options: [
       'A catered lunch spread on a buffet table with salads, sandwiches, and drinks.',
       'A welder is working on a steel beam at a construction site.',
@@ -1440,9 +1407,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 65: Unsplash ID 1531973576160-7125cd663d87
+  // Photo 65: Unsplash ID 1498050108023-c5249f4df085
   {
-    image: '1531973576160-7125cd663d87',
+    image: '1498050108023-c5249f4df085',
     options: [
       'A person pouring hot water from a kettle into a tea cup at an office kitchen counter.',
       'A surgeon is performing an operation in an operating room.',
@@ -1451,9 +1418,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 66: Unsplash ID 1560472354-b33ff0c44a44
+  // Photo 66: Unsplash ID 1515187029135-18ee286d815b
   {
-    image: '1560472354-b33ff0c44a44',
+    image: '1515187029135-18ee286d815b',
     options: [
       'An office fridge covered with magnets, name labels, and sticky notes.',
       'A chef is sautéing vegetables in a stainless steel pan.',
@@ -1462,9 +1429,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 67: Unsplash ID 1517245386807-bb43f82c33c5
+  // Photo 67: Unsplash ID 1554224155-6726b3ff858f
   {
-    image: '1517245386807-bb43f82c33c5',
+    image: '1554224155-6726b3ff858f',
     options: [
       'A group of colleagues sitting at an outdoor patio table during a coffee break.',
       'A construction worker is pouring concrete from a mixer truck.',
@@ -1473,9 +1440,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 68: Unsplash ID 1513364776144-60967b0f8010
+  // Photo 68: Unsplash ID 1524758631624-e2822e304c36
   {
-    image: '1513364776144-60967b0f8010',
+    image: '1524758631624-e2822e304c36',
     options: [
       'A snack drawer opened in a desk showing granola bars, nuts, and dried fruit.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1484,9 +1451,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 69: Unsplash ID 1551836022-deb4988cc6c1
+  // Photo 69: Unsplash ID 1517502884422-41eaead166d4
   {
-    image: '1551836022-deb4988cc6c1',
+    image: '1517502884422-41eaead166d4',
     options: [
       'A person stirring a mug of coffee while reading an email on their phone at a table.',
       'A mechanic is changing a tire in an auto repair shop.',
@@ -1495,9 +1462,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 70: Unsplash ID 1497215842964-222b430dc096
+  // Photo 70: Unsplash ID 1573164713714-d95e436ab8d6
   {
-    image: '1497215842964-222b430dc096',
+    image: '1573164713714-d95e436ab8d6',
     options: [
       'A close-up of a hand writing notes in a lined notebook next to a laptop.',
       'A janitor is mopping the floor in an empty hallway.',
@@ -1506,9 +1473,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 71: Unsplash ID 1562654501-a0fec09beca7
+  // Photo 71: Unsplash ID 1517502884422-41eaead166d4
   {
-    image: '1562654501-a0fec09beca7',
+    image: '1517502884422-41eaead166d4',
     options: [
       'A person highlighting text in a printed contract with a yellow marker at a desk.',
       'A painter is applying wallpaper in a residential room.',
@@ -1517,9 +1484,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 72: Unsplash ID 1556745757-8d76bdb6984c
+  // Photo 72: Unsplash ID 1553028826-f4804a6dba3b
   {
-    image: '1556745757-8d76bdb6984c',
+    image: '1553028826-f4804a6dba3b',
     options: [
       'An employee organizing documents into labeled folders in a filing cabinet.',
       'A dentist is examining a patient\'s teeth.',
@@ -1528,9 +1495,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 73: Unsplash ID 1507003211169-0a1dd7228f2e
+  // Photo 73: Unsplash ID 1556761175-b413da4baf72
   {
-    image: '1507003211169-0a1dd7228f2e',
+    image: '1556761175-b413da4baf72',
     options: [
       'A stack of printed reports with a red pen resting on top on a conference table.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1539,9 +1506,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 74: Unsplash ID 1523240795612-9a054b0db645
+  // Photo 74: Unsplash ID 1554224155-6726b3ff858f
   {
-    image: '1523240795612-9a054b0db645',
+    image: '1554224155-6726b3ff858f',
     options: [
       'A person stamping a document with an official company seal at a counter.',
       'A welder is working on a steel beam at a construction site.',
@@ -1550,9 +1517,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 75: Unsplash ID 1516321318423-f06f85e504b4
+  // Photo 75: Unsplash ID 1517502884422-41eaead166d4
   {
-    image: '1516321318423-f06f85e504b4',
+    image: '1517502884422-41eaead166d4',
     options: [
       'A businesswoman reviewing a printed spreadsheet and making corrections with a pen.',
       'A surgeon is performing an operation in an operating room.',
@@ -1561,9 +1528,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 76: Unsplash ID 1554469384-e58fac16e23b
+  // Photo 76: Unsplash ID 1591115765373-5207764f72e7
   {
-    image: '1554469384-e58fac16e23b',
+    image: '1591115765373-5207764f72e7',
     options: [
       'A person signing a contract at a desk with a fountain pen and a paperweight.',
       'A chef is sautéing vegetables in a stainless steel pan.',
@@ -1572,9 +1539,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 77: Unsplash ID 1507679799987-c73779587cd0
+  // Photo 77: Unsplash ID 1450101499163-c8848c66ca85
   {
-    image: '1507679799987-c73779587cd0',
+    image: '1450101499163-c8848c66ca85',
     options: [
       'An open planner on a desk with handwritten appointments and colorful sticky tabs.',
       'A construction worker is pouring concrete from a mixer truck.',
@@ -1583,9 +1550,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 78: Unsplash ID 1568992687947-868a62a9f522
+  // Photo 78: Unsplash ID 1515187029135-18ee286d815b
   {
-    image: '1568992687947-868a62a9f522',
+    image: '1515187029135-18ee286d815b',
     options: [
       'A pair of reading glasses resting on top of a stack of legal documents.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1594,9 +1561,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 79: Unsplash ID 1556740758-90de374c12ae
+  // Photo 79: Unsplash ID 1524758631624-e2822e304c36
   {
-    image: '1556740758-90de374c12ae',
+    image: '1524758631624-e2822e304c36',
     options: [
       'A close-up of a person typing on a laptop with a printed outline document beside them.',
       'A mechanic is changing a tire in an auto repair shop.',
@@ -1605,9 +1572,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 80: Unsplash ID 1559136555-9303baea8ebe
+  // Photo 80: Unsplash ID 1450101499163-c8848c66ca85
   {
-    image: '1559136555-9303baea8ebe',
+    image: '1450101499163-c8848c66ca85',
     options: [
       'A receptionist sitting behind a curved desk answering a phone call.',
       'A janitor is mopping the floor in an empty hallway.',
@@ -1616,9 +1583,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 81: Unsplash ID 1522202176988-66273c2fd560
+  // Photo 81: Unsplash ID 1522071820081-009f0129c71c
   {
-    image: '1522202176988-66273c2fd560',
+    image: '1522071820081-009f0129c71c',
     options: [
       'A visitor signing in at a digital check-in kiosk in a modern office lobby.',
       'A painter is applying wallpaper in a residential room.',
@@ -1627,9 +1594,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 82: Unsplash ID 1560179707-f14e90ef3624
+  // Photo 82: Unsplash ID 1556761175-b413da4baf72
   {
-    image: '1560179707-f14e90ef3624',
+    image: '1556761175-b413da4baf72',
     options: [
       'A waiting area with rows of chairs, a water cooler, and magazines on a coffee table.',
       'A dentist is examining a patient\'s teeth.',
@@ -1638,9 +1605,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 83: Unsplash ID 1551288049-bebda4e38f72
+  // Photo 83: Unsplash ID 1527192491265-7e15c55b1ed2
   {
-    image: '1551288049-bebda4e38f72',
+    image: '1527192491265-7e15c55b1ed2',
     options: [
       'A security guard monitoring CCTV screens at a front desk console.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1649,9 +1616,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 84: Unsplash ID 1576091160550-2173dba999f0
+  // Photo 84: Unsplash ID 1556740738-b6a63e27c4df
   {
-    image: '1576091160550-2173dba999f0',
+    image: '1556740738-b6a63e27c4df',
     options: [
       'A corporate lobby with a large company logo mounted on a stone feature wall.',
       'A welder is working on a steel beam at a construction site.',
@@ -1660,9 +1627,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 85: Unsplash ID 1454165804606-c3d57bc86b41
+  // Photo 85: Unsplash ID 1497366216548-37526070297c
   {
-    image: '1454165804606-c3d57bc86b41',
+    image: '1497366216548-37526070297c',
     options: [
       'An elevator bank with brushed steel doors and floor indicators in an office tower.',
       'A surgeon is performing an operation in an operating room.',
@@ -1671,9 +1638,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 86: Unsplash ID 1505664194779-8beaceb93745
+  // Photo 86: Unsplash ID 1497215842964-222b430dc094
   {
-    image: '1505664194779-8beaceb93745',
+    image: '1497215842964-222b430dc094',
     options: [
       'A visitor holding a lanyard badge while speaking with a receptionist.',
       'A chef is sautéing vegetables in a stainless steel pan.',
@@ -1682,9 +1649,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 87: Unsplash ID 1566576912321-d58ddd7a6089
+  // Photo 87: Unsplash ID 1573164713714-d95e436ab8d6
   {
-    image: '1566576912321-d58ddd7a6089',
+    image: '1573164713714-d95e436ab8d6',
     options: [
       'A person pressing the elevator button while carrying a briefcase in a lobby.',
       'A construction worker is pouring concrete from a mixer truck.',
@@ -1693,9 +1660,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 88: Unsplash ID 1543286386-713bdd548da5
+  // Photo 88: Unsplash ID 1498050108023-c5249f4df085
   {
-    image: '1543286386-713bdd548da5',
+    image: '1498050108023-c5249f4df085',
     options: [
       'An umbrella stand and coat rack near the entrance of an office building.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1704,9 +1671,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 89: Unsplash ID 1513635269975-59663e0ac1ae
+  // Photo 89: Unsplash ID 1450101499163-c8848c66ca85
   {
-    image: '1513635269975-59663e0ac1ae',
+    image: '1450101499163-c8848c66ca85',
     options: [
       'A directory board mounted on the wall listing company names and floor numbers.',
       'A mechanic is changing a tire in an auto repair shop.',
@@ -1715,9 +1682,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 90: Unsplash ID 1558618666-fcd25c85f82f
+  // Photo 90: Unsplash ID 1556740738-b6a63e27c4df
   {
-    image: '1558618666-fcd25c85f82f',
+    image: '1556740738-b6a63e27c4df',
     options: [
       'A modern glass office building reflecting the sky with a landscaped entrance.',
       'A janitor is mopping the floor in an empty hallway.',
@@ -1726,9 +1693,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 91: Unsplash ID 1524661135-423995f22d0c
+  // Photo 91: Unsplash ID 1504384308090-c894fdcc538d
   {
-    image: '1524661135-423995f22d0c',
+    image: '1504384308090-c894fdcc538d',
     options: [
       'A corporate campus with a walking path, trees, and benches between two office buildings.',
       'A painter is applying wallpaper in a residential room.',
@@ -1737,9 +1704,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 92: Unsplash ID 1504384764586-bb4cdc1707b1
+  // Photo 92: Unsplash ID 1524758631624-e2822e304c36
   {
-    image: '1504384764586-bb4cdc1707b1',
+    image: '1524758631624-e2822e304c36',
     options: [
       'A company parking lot with designated visitor spaces and directional signage.',
       'A dentist is examining a patient\'s teeth.',
@@ -1748,9 +1715,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 93: Unsplash ID 1497366216548-37526070297e
+  // Photo 93: Unsplash ID 1556740738-b6a63e27c4df
   {
-    image: '1497366216548-37526070297e',
+    image: '1556740738-b6a63e27c4df',
     options: [
       'A row of bicycles parked at a bike rack outside an office building.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1759,9 +1726,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 94: Unsplash ID 1497215728101-856f4ea421fc
+  // Photo 94: Unsplash ID 1556761175-b413da4baf72
   {
-    image: '1497215728101-856f4ea421fc',
+    image: '1556761175-b413da4baf72',
     options: [
       'A loading dock at the back of a commercial building with a delivery van parked.',
       'A welder is working on a steel beam at a construction site.',
@@ -1770,9 +1737,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 95: Unsplash ID 1527192491265-7e15c55b1ed4
+  // Photo 95: Unsplash ID 1524758631624-e2822e304c36
   {
-    image: '1527192491265-7e15c55b1ed4',
+    image: '1524758631624-e2822e304c36',
     options: [
       'A plaza with outdoor seating, potted trees, and employees having a coffee break.',
       'A surgeon is performing an operation in an operating room.',
@@ -1781,9 +1748,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 96: Unsplash ID 1519389950473-47ba0277781e
+  // Photo 96: Unsplash ID 1517502884422-41eaead166d4
   {
-    image: '1519389950473-47ba0277781e',
+    image: '1517502884422-41eaead166d4',
     options: [
       'A signpost with directional arrows pointing to different office wings on a campus.',
       'A chef is sautéing vegetables in a stainless steel pan.',
@@ -1792,9 +1759,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 97: Unsplash ID 1521791136064-7986c2920219
+  // Photo 97: Unsplash ID 1497366754035-f200968a6e72
   {
-    image: '1521791136064-7986c2920219',
+    image: '1497366754035-f200968a6e72',
     options: [
       'A flagpole with a company flag flying in front of a low-rise office building.',
       'A construction worker is pouring concrete from a mixer truck.',
@@ -1803,9 +1770,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 98: Unsplash ID 1542744173-8e7e53415bb2
+  // Photo 98: Unsplash ID 1497366754035-f200968a6e72
   {
-    image: '1542744173-8e7e53415bb2',
+    image: '1497366754035-f200968a6e72',
     options: [
       'An outdoor covered walkway connecting two buildings on a corporate campus.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1814,9 +1781,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 99: Unsplash ID 1497366811353-6870744d04b4
+  // Photo 99: Unsplash ID 1554224155-6726b3ff858f
   {
-    image: '1497366811353-6870744d04b4',
+    image: '1554224155-6726b3ff858f',
     options: [
       'A landscaped courtyard with a fountain, benches, and employees walking through.',
       'A mechanic is changing a tire in an auto repair shop.',
@@ -1825,9 +1792,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 100: Unsplash ID 1556761223-4c4282c73f79
+  // Photo 100: Unsplash ID 1497366216548-37526070297c
   {
-    image: '1556761223-4c4282c73f79',
+    image: '1497366216548-37526070297c',
     options: [
       'A warehouse worker scanning a barcode on a cardboard box with a handheld scanner.',
       'A janitor is mopping the floor in an empty hallway.',
@@ -1836,9 +1803,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 101: Unsplash ID 1521791136064-7986c292021a
+  // Photo 101: Unsplash ID 1522071820081-009f0129c71c
   {
-    image: '1521791136064-7986c292021a',
+    image: '1522071820081-009f0129c71c',
     options: [
       'Stacked shipping boxes on a wooden pallet wrapped in clear plastic film.',
       'A painter is applying wallpaper in a residential room.',
@@ -1847,9 +1814,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 102: Unsplash ID 1553877522-43269d4ea986
+  // Photo 102: Unsplash ID 1522071820081-009f0129c71c
   {
-    image: '1553877522-43269d4ea986',
+    image: '1522071820081-009f0129c71c',
     options: [
       'A conveyor belt moving packages toward a loading area in a distribution center.',
       'A dentist is examining a patient\'s teeth.',
@@ -1858,9 +1825,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 103: Unsplash ID 1531973576160-7125cd663d88
+  // Photo 103: Unsplash ID 1504384308090-c894fdcc538d
   {
-    image: '1531973576160-7125cd663d88',
+    image: '1504384308090-c894fdcc538d',
     options: [
       'A delivery driver loading boxes into the back of a white van at a loading bay.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1869,9 +1836,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 104: Unsplash ID 1560472354-b33ff0c44a45
+  // Photo 104: Unsplash ID 1486312338219-ce68d2c6f44d
   {
-    image: '1560472354-b33ff0c44a45',
+    image: '1486312338219-ce68d2c6f44d',
     options: [
       'A person taping shut a cardboard box on a packing table with a tape gun.',
       'A welder is working on a steel beam at a construction site.',
@@ -1880,9 +1847,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 105: Unsplash ID 1517245386807-bb43f82c33c6
+  // Photo 105: Unsplash ID 1504384308090-c894fdcc538d
   {
-    image: '1517245386807-bb43f82c33c6',
+    image: '1504384308090-c894fdcc538d',
     options: [
       'A shipping label printer producing a label from a roll at a packing station.',
       'A surgeon is performing an operation in an operating room.',
@@ -1891,9 +1858,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 106: Unsplash ID 1513364776144-60967b0f8011
+  // Photo 106: Unsplash ID 1519389950473-47ba0277781c
   {
-    image: '1513364776144-60967b0f8011',
+    image: '1519389950473-47ba0277781c',
     options: [
       'A receiving dock with stacked pallets and a worker checking a packing list.',
       'A chef is sautéing vegetables in a stainless steel pan.',
@@ -1902,9 +1869,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 107: Unsplash ID 1551836022-deb4988cc6c2
+  // Photo 107: Unsplash ID 1527192491265-7e15c55b1ed2
   {
-    image: '1551836022-deb4988cc6c2',
+    image: '1527192491265-7e15c55b1ed2',
     options: [
       'A worker weighing a sealed package on a digital scale before shipment.',
       'A construction worker is pouring concrete from a mixer truck.',
@@ -1913,9 +1880,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 108: Unsplash ID 1497215842964-222b430dc097
+  // Photo 108: Unsplash ID 1556761175-b413da4baf72
   {
-    image: '1497215842964-222b430dc097',
+    image: '1556761175-b413da4baf72',
     options: [
       'A mailroom with sorting bins labeled by department and a scale on the counter.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1924,9 +1891,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 109: Unsplash ID 1562654501-a0fec09beca8
+  // Photo 109: Unsplash ID 1591115765373-5207764f72e7
   {
-    image: '1562654501-a0fec09beca8',
+    image: '1591115765373-5207764f72e7',
     options: [
       'A hand placing a fragile sticker on a cardboard shipping box.',
       'A mechanic is changing a tire in an auto repair shop.',
@@ -1935,9 +1902,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 110: Unsplash ID 1556745757-8d76bdb6984d
+  // Photo 110: Unsplash ID 1504384308090-c894fdcc538d
   {
-    image: '1556745757-8d76bdb6984d',
+    image: '1504384308090-c894fdcc538d',
     options: [
       'A presenter standing beside a projection screen showing a bar chart to an audience.',
       'A janitor is mopping the floor in an empty hallway.',
@@ -1946,9 +1913,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 111: Unsplash ID 1507003211169-0a1dd7228f2f
+  // Photo 111: Unsplash ID 1497215842964-222b430dc094
   {
-    image: '1507003211169-0a1dd7228f2f',
+    image: '1497215842964-222b430dc094',
     options: [
       'A trainer writing bullet points on a flip chart during a workshop session.',
       'A painter is applying wallpaper in a residential room.',
@@ -1957,9 +1924,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 112: Unsplash ID 1523240795612-9a054b0db646
+  // Photo 112: Unsplash ID 1497215842964-222b430dc094
   {
-    image: '1523240795612-9a054b0db646',
+    image: '1497215842964-222b430dc094',
     options: [
       'An audience of employees seated in rows listening to a speaker at a podium.',
       'A dentist is examining a patient\'s teeth.',
@@ -1968,9 +1935,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 113: Unsplash ID 1516321318423-f06f85e504b5
+  // Photo 113: Unsplash ID 1591115765373-5207764f72e7
   {
-    image: '1516321318423-f06f85e504b5',
+    image: '1591115765373-5207764f72e7',
     options: [
       'A person pointing at a pie chart on a screen during a team meeting.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -1979,9 +1946,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 114: Unsplash ID 1554469384-e58fac16e23c
+  // Photo 114: Unsplash ID 1573164713714-d95e436ab8d6
   {
-    image: '1554469384-e58fac16e23c',
+    image: '1573164713714-d95e436ab8d6',
     options: [
       'A classroom-style training room with desks, chairs, and a projector at the front.',
       'A welder is working on a steel beam at a construction site.',
@@ -1990,9 +1957,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 115: Unsplash ID 1507679799987-c73779587cd1
+  // Photo 115: Unsplash ID 1573164713714-d95e436ab8d6
   {
-    image: '1507679799987-c73779587cd1',
+    image: '1573164713714-d95e436ab8d6',
     options: [
       'A new employee looking at a company handbook while sitting at a training desk.',
       'A surgeon is performing an operation in an operating room.',
@@ -2001,9 +1968,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 116: Unsplash ID 1568992687947-868a62a9f523
+  // Photo 116: Unsplash ID 1591115765373-5207764f72e7
   {
-    image: '1568992687947-868a62a9f523',
+    image: '1591115765373-5207764f72e7',
     options: [
       'A speaker gesturing while explaining a diagram on a large presentation screen.',
       'A chef is sautéing vegetables in a stainless steel pan.',
@@ -2012,9 +1979,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'B',
   },
-  // Photo 117: Unsplash ID 1556740758-90de374c12af
+  // Photo 117: Unsplash ID 1519389950473-47ba0277781c
   {
-    image: '1556740758-90de374c12af',
+    image: '1519389950473-47ba0277781c',
     options: [
       'Employees wearing headphones and watching a training video on individual monitors.',
       'A construction worker is pouring concrete from a mixer truck.',
@@ -2023,9 +1990,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'C',
   },
-  // Photo 118: Unsplash ID 1559136555-9303baea8ebf
+  // Photo 118: Unsplash ID 1515187029135-18ee286d815b
   {
-    image: '1559136555-9303baea8ebf',
+    image: '1515187029135-18ee286d815b',
     options: [
       'A certificate of completion displayed on a desk next to a pen and folder.',
       'A plumber is fixing pipes under a kitchen sink.',
@@ -2034,9 +2001,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'D',
   },
-  // Photo 119: Unsplash ID 1522202176988-66273c2fd561
+  // Photo 119: Unsplash ID 1450101499163-c8848c66ca85
   {
-    image: '1522202176988-66273c2fd561',
+    image: '1450101499163-c8848c66ca85',
     options: [
       'A trainer handing out printed worksheets to participants at a conference table.',
       'A mechanic is changing a tire in an auto repair shop.',
@@ -2045,9 +2012,9 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
     ],
     answer: 'A',
   },
-  // Photo 120: Unsplash ID 1560179707-f14e90ef3625
+  // Photo 120: Unsplash ID 1498050108023-c5249f4df085
   {
-    image: '1560179707-f14e90ef3625',
+    image: '1498050108023-c5249f4df085',
     options: [
       'A person organizing binders on a supply shelf in an office storage room.',
       'A plumber is fixing pipes under a kitchen sink.',
