@@ -86,7 +86,7 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
             const startId = finalQuestions.length + 1;
 
             const part1Count = getPart1Count(questionCount, startId);
-            const part1Instruction = buildPart1Instruction(startId, currentChunkSize, part1Count);
+            const part1Instruction = buildPart1Instruction(startId, currentChunkSize, part1Count, questionCount);
             const dist = getQuestionDistribution(questionCount);
 
             const prompt = `Generate a JSON object with a "questions" array containing EXACTLY ${currentChunkSize} TOEIC questions starting at ID ${startId}.
