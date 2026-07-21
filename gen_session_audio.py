@@ -42,7 +42,7 @@ async def gen_multi_voice_audio(file_path, segments, sem):
                 f.write("file '{}'\n".format(os.path.abspath(tf)))
         proc = await asyncio.create_subprocess_exec(
             "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_list,
-            "-c", "copy", file_path,
+            "-c:a", "libmp3lame", file_path,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
         await proc.wait()
@@ -214,9 +214,9 @@ async def main():
                 text = "Could you please tell me about the current status?"
         elif q.get("part") in (3, 4):
             # Part 3/4: multi-voice audio
+            # Only speak transcript + question. Options are read silently by examinee.
             transcript = q.get("transcript", "")
             question = q.get("question", "")
-            options = q.get("options", [])
             segments = []
             if transcript:
                 parsed = parse_speaker_turns(transcript)
@@ -224,10 +224,7 @@ async def main():
                 segments.extend((dialogue, voice) for (_sp, dialogue, voice) in parsed)
             if question:
                 segments.append(("Question: {}".format(question), FEMALE_VOICE))
-            if options:
-                for i, opt in enumerate(options):
-                    label = chr(65 + i)
-                    segments.append(("{}. {}".format(label, opt), FEMALE_VOICE))
+            # Options are NOT spoken for Part 3/4 (examinee reads them)
             if segments:
                 tasks.append(gen_multi_voice_audio(output_path, segments, sem))
             continue
