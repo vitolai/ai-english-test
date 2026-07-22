@@ -317,6 +317,78 @@ export function ensurePart7Questions(questions: Array<Record<string, unknown>>):
   });
 }
 
+// ============================================================
+// LISTENING COHERENCE — force P1-P4 fields from canonical mock data
+// ============================================================
+// After AI generation and other normalizers, some P1-P4 questions may still
+// carry AI-generated content that doesn't match the canonical mock datasets.
+// This normalizer unconditionally replaces the relevant fields so that every
+// listening question is guaranteed coherent with its source image/transcript.
+export function ensureListeningCoherence(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  let p1Idx = 0;
+  let p2Idx = 0;
+  let p3ConvIdx = 0;
+  let p3QIdx = 0;
+  let p4TalkIdx = 0;
+  let p4QIdx = 0;
+
+  return questions.map(q => {
+    const part = q['part'] as number;
+    const type = q['type'] as string;
+
+    if (type === 'listening' && part === 1) {
+      // P1: always override image + options + answer from PART1_DATA
+      const d = PART1_DATA[p1Idx % PART1_DATA.length];
+      q['image'] = d.image;
+      q['options'] = [...d.options];
+      q['answer'] = d.answer;
+      p1Idx++;
+    }
+
+    if (type === 'listening' && part === 2) {
+      // P2: always override transcript + options from PART2_DATA
+      // (MOCK_PART2_QUESTIONS in the spec = PART2_DATA here)
+      const d = PART2_DATA[p2Idx % PART2_DATA.length];
+      q['transcript'] = d.transcript;
+      q['options'] = [...d.options];
+      p2Idx++;
+    }
+
+    if (type === 'listening' && part === 3) {
+      // P3: always override transcript + options; override question if mismatch
+      const conv = MOCK_PART3_CONVERSATIONS[p3ConvIdx % MOCK_PART3_CONVERSATIONS.length];
+      const mockQ = conv.questions[p3QIdx % conv.questions.length];
+      q['transcript'] = conv.transcript;
+      q['options'] = [...mockQ.options];
+      if (q['question'] !== mockQ.question) {
+        q['question'] = mockQ.question;
+      }
+      p3QIdx++;
+      if (p3QIdx >= 3) {
+        p3QIdx = 0;
+        p3ConvIdx++;
+      }
+    }
+
+    if (type === 'listening' && part === 4) {
+      // P4: always override transcript + options; override question if mismatch
+      const talk = MOCK_PART4_TALKS[p4TalkIdx % MOCK_PART4_TALKS.length];
+      const mockQ = talk.questions[p4QIdx % talk.questions.length];
+      q['transcript'] = talk.transcript;
+      q['options'] = [...mockQ.options];
+      if (q['question'] !== mockQ.question) {
+        q['question'] = mockQ.question;
+      }
+      p4QIdx++;
+      if (p4QIdx >= 3) {
+        p4QIdx = 0;
+        p4TalkIdx++;
+      }
+    }
+
+    return q;
+  });
+}
 
 // Normalize a Part 1 image field to a bare, valid Unsplash photo ID.
 // The AI provider sometimes returns IDs already prefixed with 'photo'/'photo-'
