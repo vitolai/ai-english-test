@@ -1,0 +1,30 @@
+2026-07-22 21:41:27,690 [INFO] ======================================================================
+2026-07-22 21:41:27,690 [INFO] TEST: test_exam_flow.py — Full Exam Flow
+2026-07-22 21:41:27,690 [INFO] RUN_ID: 20260722_214127
+2026-07-22 21:41:27,690 [INFO] ======================================================================
+2026-07-22 21:41:29,438 [INFO] [CP01] Navigating to dashboard...
+2026-07-22 21:41:31,030 [INFO] SCREENSHOT 1: 01_dashboard_loaded.png
+2026-07-22 21:41:31,030 [INFO] [CP01] PASS — Dashboard heading visible
+2026-07-22 21:41:31,030 [INFO] [CP02] Selecting 10 questions...
+2026-07-22 21:41:31,792 [INFO] SCREENSHOT 2: 02_10_selected.png
+2026-07-22 21:41:31,793 [INFO] [CP02] PASS — 10-question count selected
+2026-07-22 21:41:31,793 [INFO] [CP03] Selecting Random source...
+2026-07-22 21:41:32,260 [INFO] SCREENSHOT 3: 03_random_selected.png
+2026-07-22 21:41:32,260 [INFO] [CP03] PASS — Random source selected
+2026-07-22 21:41:32,260 [INFO] [CP04] Clicking START EXAM...
+2026-07-22 21:41:32,912 [INFO] SCREENSHOT 4: 04_settings_modal.png
+2026-07-22 21:41:32,912 [INFO] [CP04] PASS — Settings modal visible
+2026-07-22 21:41:32,912 [INFO] [CP05] Filling API key (test triggers mock mode)...
+2026-07-22 21:41:33,115 [INFO] SCREENSHOT 5: 05_api_key_filled.png
+2026-07-22 21:41:33,115 [INFO] [CP05] PASS — API key filled
+2026-07-22 21:41:33,116 [INFO] [CP06] Clicking GO! START PRACTICE...
+2026-07-22 21:42:03,184 [INFO] SCREENSHOT 6: 06_ERROR.png
+2026-07-22 21:42:03,185 [ERROR] TEST FAILED: Locator.scroll_into_view_if_needed: Timeout 30000ms exceeded.
+Call log:
+  - waiting for get_by_role("button", name="GO! START PRACTICE")
+    - waiting for" http://localhost:5173/" navigation to finish...
+    - navigated to "http://localhost:5173/"
+
+2026-07-22 21:42:03,185 [INFO] ======================================================================
+2026-07-22 21:42:03,185 [INFO] RESULT: FAIL
+2026-07-22 21:42:03,185 [INFO] ======================================================================

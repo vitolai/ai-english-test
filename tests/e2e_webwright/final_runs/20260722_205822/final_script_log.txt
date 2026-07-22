@@ -1,0 +1,23 @@
+2026-07-22 20:58:22,659 [INFO] ======================================================================
+2026-07-22 20:58:22,659 [INFO] TEST: test_p1_photo.py — Part 1 Photo Display
+2026-07-22 20:58:22,659 [INFO] RUN_ID: 20260722_205822
+2026-07-22 20:58:22,659 [INFO] ======================================================================
+2026-07-22 20:58:24,459 [INFO] Generating 10Q exam via API...
+2026-07-22 20:58:24,464 [INFO] Session started: 2026-07-22-0c9e08ec
+2026-07-22 20:58:26,469 [INFO]   Status: phase=completed, progress=100%
+2026-07-22 20:58:26,470 [INFO] Exam generation completed
+2026-07-22 20:58:26,471 [INFO] [CP01] Navigating to dashboard...
+2026-07-22 20:58:27,790 [INFO] SCREENSHOT 1: 01_dashboard_loaded.png
+2026-07-22 20:58:27,790 [INFO] [CP01] Dashboard loaded
+2026-07-22 20:58:29,580 [INFO] SCREENSHOT 2: 02_settings_modal.png
+2026-07-22 20:58:30,242 [INFO] SCREENSHOT 3: 03_mock_provider_selected.png
+2026-07-22 20:59:00,308 [INFO] SCREENSHOT 4: 04_ERROR.png
+2026-07-22 20:59:00,308 [ERROR] TEST FAILED: Locator.scroll_into_view_if_needed: Timeout 30000ms exceeded.
+Call log:
+  - waiting for get_by_role("button", name="GO! START PRACTICE")
+    - waiting for navigation to finish...
+    - navigated to "http://localhost:5173/"
+
+2026-07-22 20:59:00,308 [INFO] ======================================================================
+2026-07-22 20:59:00,308 [INFO] RESULT: FAIL
+2026-07-22 20:59:00,308 [INFO] ======================================================================

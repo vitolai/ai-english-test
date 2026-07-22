@@ -1,0 +1,24 @@
+2026-07-22 21:26:09,467 [INFO] ======================================================================
+2026-07-22 21:26:09,467 [INFO] TEST: test_p1_photo.py — Part 1 Photo Display
+2026-07-22 21:26:09,467 [INFO] RUN_ID: 20260722_212609
+2026-07-22 21:26:09,467 [INFO] ======================================================================
+2026-07-22 21:26:11,257 [INFO] Generating 10Q exam via API...
+2026-07-22 21:26:11,262 [INFO] Session started: 2026-07-22-05ee0887
+2026-07-22 21:26:13,269 [INFO]   Status: phase=completed, progress=100%
+2026-07-22 21:26:13,269 [INFO] Exam generation completed
+2026-07-22 21:26:13,270 [INFO] [CP01] Navigating to frontend...
+2026-07-22 21:26:14,649 [INFO] SCREENSHOT 1: 01_dashboard_loaded.png
+2026-07-22 21:26:14,649 [INFO] [CP01] Dashboard loaded
+2026-07-22 21:26:14,649 [INFO] [CP01] Injecting pre-generated exam data into React...
+2026-07-22 21:26:14,667 [INFO] [CP01] Inject result: state_not_found
+2026-07-22 21:26:16,756 [INFO] SCREENSHOT 2: 02_exam_injected.png
+2026-07-22 21:26:46,821 [INFO] SCREENSHOT 3: 03_ERROR.png
+2026-07-22 21:26:46,821 [ERROR] TEST FAILED: Page.wait_for_selector: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("h1:has-text(\"Listening Comprehension\"), h1:has-text(\"Reading Test\")") to be visible
+    - waiting for navigation to finish...
+    - navigated to "http://localhost:5173/"
+
+2026-07-22 21:26:46,821 [INFO] ======================================================================
+2026-07-22 21:26:46,821 [INFO] RESULT: FAIL
+2026-07-22 21:26:46,821 [INFO] ======================================================================

@@ -1,0 +1,21 @@
+2026-07-22 21:39:16,432 [INFO] ======================================================================
+2026-07-22 21:39:16,432 [INFO] TEST: test_p1_photo.py — Part 1 Photo Display
+2026-07-22 21:39:16,432 [INFO] RUN_ID: 20260722_213916
+2026-07-22 21:39:16,432 [INFO] ======================================================================
+2026-07-22 21:39:18,207 [INFO] [CP01] Navigating to dashboard...
+2026-07-22 21:39:20,086 [INFO] SCREENSHOT 1: 01_dashboard_loaded.png
+2026-07-22 21:39:20,086 [INFO] [CP01] PASS — Dashboard heading visible
+2026-07-22 21:39:20,087 [INFO] Selecting 10 questions...
+2026-07-22 21:39:20,793 [INFO] Selecting Random source...
+2026-07-22 21:39:21,179 [INFO] Clicking START EXAM to open settings...
+2026-07-22 21:39:21,720 [INFO] SCREENSHOT 2: 02_settings_modal.png
+2026-07-22 21:39:21,720 [INFO] Settings modal visible
+2026-07-22 21:39:21,720 [INFO] Filling API key (test triggers mock mode)...
+2026-07-22 21:39:21,869 [INFO] SCREENSHOT 3: 03_api_key_filled.png
+2026-07-22 21:39:21,869 [INFO] API key filled
+2026-07-22 21:39:21,869 [INFO] Clicking GO! START PRACTICE...
+2026-07-22 21:39:22,122 [INFO] SCREENSHOT 4: 04_ERROR.png
+2026-07-22 21:39:22,122 [ERROR] TEST FAILED: Page.evaluate: Execution context was destroyed, most likely because of a navigation
+2026-07-22 21:39:22,122 [INFO] ======================================================================
+2026-07-22 21:39:22,122 [INFO] RESULT: FAIL
+2026-07-22 21:39:22,122 [INFO] ======================================================================

@@ -1,0 +1,17 @@
+2026-07-22 05:54:20,216 [INFO] ======================================================================
+2026-07-22 05:54:20,216 [INFO] TEST: test_p1_photo.py — Part 1 Photo Display
+2026-07-22 05:54:20,216 [INFO] RUN_ID: 20260722_055420
+2026-07-22 05:54:20,216 [INFO] ======================================================================
+2026-07-22 05:54:22,029 [INFO] Generating 10Q exam via API...
+2026-07-22 05:54:22,033 [INFO] Session started: 2026-07-21-544b5ace
+2026-07-22 05:54:24,039 [INFO]   Status: phase=completed, progress=100%
+2026-07-22 05:54:24,039 [INFO] Exam generation completed
+2026-07-22 05:54:24,039 [INFO] [CP01] Navigating to exam...
+2026-07-22 05:54:24,314 [INFO] SCREENSHOT 1: 01_ERROR.png
+2026-07-22 05:54:24,314 [ERROR] TEST FAILED: Page.goto: NS_ERROR_NET_EMPTY_RESPONSE
+Call log:
+  - navigating to "http://localhost:5173/", waiting until "networkidle"
+
+2026-07-22 05:54:24,314 [INFO] ======================================================================
+2026-07-22 05:54:24,314 [INFO] RESULT: FAIL
+2026-07-22 05:54:24,314 [INFO] ======================================================================

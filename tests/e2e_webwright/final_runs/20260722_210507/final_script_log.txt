@@ -1,0 +1,25 @@
+2026-07-22 21:05:07,556 [INFO] ======================================================================
+2026-07-22 21:05:07,556 [INFO] TEST: test_p1_photo.py — Part 1 Photo Display
+2026-07-22 21:05:07,556 [INFO] RUN_ID: 20260722_210507
+2026-07-22 21:05:07,557 [INFO] ======================================================================
+2026-07-22 21:05:09,329 [INFO] Generating 10Q exam via API...
+2026-07-22 21:05:09,339 [INFO] Session started: 2026-07-22-754baebd
+2026-07-22 21:05:11,344 [INFO]   Status: phase=audio, progress=95%
+2026-07-22 21:05:13,347 [INFO]   Status: phase=completed, progress=100%
+2026-07-22 21:05:13,348 [INFO] Exam generation completed
+2026-07-22 21:05:13,348 [INFO] [CP01] Navigating to dashboard...
+2026-07-22 21:05:14,657 [INFO] SCREENSHOT 1: 01_dashboard_loaded.png
+2026-07-22 21:05:14,658 [INFO] [CP01] Dashboard loaded
+2026-07-22 21:05:16,223 [INFO] SCREENSHOT 2: 02_settings_modal.png
+2026-07-22 21:05:16,372 [INFO] SCREENSHOT 3: 03_api_key_filled.png
+2026-07-22 21:05:17,977 [INFO] SCREENSHOT 4: 04_loading_overlay.png
+2026-07-22 21:07:18,046 [INFO] SCREENSHOT 5: 05_ERROR.png
+2026-07-22 21:07:18,046 [ERROR] TEST FAILED: Page.wait_for_selector: Timeout 120000ms exceeded.
+Call log:
+  - waiting for locator("h1:has-text(\"Listening Comprehension\"), h1:has-text(\"Reading Test\")") to be visible
+    - waiting for navigation to finish...
+    - navigated to "http://localhost:5173/"
+
+2026-07-22 21:07:18,046 [INFO] ======================================================================
+2026-07-22 21:07:18,046 [INFO] RESULT: FAIL
+2026-07-22 21:07:18,046 [INFO] ======================================================================

@@ -1,0 +1,15 @@
+2026-07-22 21:30:34,063 [INFO] ======================================================================
+2026-07-22 21:30:34,063 [INFO] TEST: test_p1_photo.py — Part 1 Photo Display
+2026-07-22 21:30:34,063 [INFO] RUN_ID: 20260722_213034
+2026-07-22 21:30:34,063 [INFO] ======================================================================
+2026-07-22 21:30:35,853 [INFO] Generating 10Q exam via API...
+2026-07-22 21:30:35,858 [INFO] Session started: 2026-07-22-2cf76fc2
+2026-07-22 21:30:37,864 [INFO]   Status: phase=completed, progress=100%
+2026-07-22 21:30:37,864 [INFO] Exam generation completed
+2026-07-22 21:30:37,864 [INFO] [CP01] Navigating to frontend...
+2026-07-22 21:30:39,059 [INFO] [CP01] Waiting for dashboard heading...
+2026-07-22 21:30:39,353 [INFO] SCREENSHOT 1: 01_ERROR.png
+2026-07-22 21:30:39,353 [ERROR] TEST FAILED: Page.evaluate: Execution context was destroyed, most likely because of a navigation.
+2026-07-22 21:30:39,353 [INFO] ======================================================================
+2026-07-22 21:30:39,354 [INFO] RESULT: FAIL
+2026-07-22 21:30:39,354 [INFO] ======================================================================

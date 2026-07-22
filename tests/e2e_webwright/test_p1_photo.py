@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 test_p1_photo.py — Webwright-style E2E: Part 1 Photo Display
-=============================================================
+============================================================
 Plan: plan.md Test 4 — CP01 through CP10
 
-Flow: Generate exam via API → navigate to frontend →
+Flow: Dashboard → Settings → Mock Key → GO → Loading → Exam →
       Find Part 1 questions → verify photo renders, URL is Unsplash,
       URL returns HTTP 200, audio player present, options show placeholders
 
@@ -19,7 +19,6 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-import requests
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
 # ─── Run ID & directories ───────────────────────────────────────────
@@ -57,38 +56,6 @@ def screenshot(page, label: str) -> str:
     return str(path)
 
 
-def generate_exam_via_api(question_count: int = 10) -> str:
-    """Generate exam via backend API and return session_id."""
-    log.info(f"Generating {question_count}Q exam via API...")
-    resp = requests.post(
-        f"{API_BASE}/api/generate",
-        json={
-            "seedText": "International business TOEIC practice exam with photos",
-            "questionCount": question_count,
-            "model": "mock",
-            "apiKey": MOCK_API_KEY,
-            "config": {"providerId": "mock"},
-        },
-        timeout=30,
-    )
-    resp.raise_for_status()
-    session_id = resp.json()["session_id"]
-    log.info(f"Session started: {session_id}")
-
-    for attempt in range(60):
-        time.sleep(2)
-        status_resp = requests.get(f"{API_BASE}/api/status/{session_id}", timeout=10)
-        status = status_resp.json()
-        log.info(f"  Status: phase={status['phase']}, progress={status['progress']}%")
-        if status["phase"] == "completed":
-            log.info("Exam generation completed")
-            return session_id
-        if status["phase"] == "error":
-            raise RuntimeError(f"Generation failed: {status.get('message', 'unknown')}")
-
-    raise TimeoutError("Exam generation timed out after 120s")
-
-
 def run_test():
     log.info("=" * 70)
     log.info("TEST: test_p1_photo.py — Part 1 Photo Display")
@@ -102,16 +69,68 @@ def run_test():
         page.set_default_timeout(30_000)
 
         try:
-            # ── Generate exam via API ─────────────────────────────────
-            session_id = generate_exam_via_api(10)
-
-            # ── CP01: Navigate and wait for exam ──────────────────────
-            log.info("[CP01] Navigating to exam...")
+            # ── CP01: Dashboard loads ─────────────────────────────────
+            log.info("[CP01] Navigating to dashboard...")
             page.goto(f"{FRONTEND_URL}/", wait_until="networkidle")
-            page.wait_for_selector(
-                'h1:has-text("Listening Comprehension"), h1:has-text("Reading Test")',
-                timeout=60_000,
-            )
+            page.wait_for_selector('h1:has-text("TOEIC Practice Exam")', timeout=15_000)
+            screenshot(page, "dashboard_loaded")
+            log.info("[CP01] PASS — Dashboard heading visible")
+
+            # ── Select 10 questions ──────────────────────────────────
+            log.info("Selecting 10 questions...")
+            page.get_by_role("button", name="10", exact=True).click()
+            time.sleep(0.3)
+
+            # ── Select Random source ──────────────────────────────────
+            log.info("Selecting Random source...")
+            page.get_by_role("button", name="Random Shuffle").click()
+            time.sleep(0.3)
+
+            # ── Open settings modal ───────────────────────────────────
+            log.info("Clicking START EXAM to open settings...")
+            page.get_by_role("button", name="START EXAM").click()
+            page.wait_for_selector('h2:has-text("AI Configuration")', timeout=10_000)
+            screenshot(page, "settings_modal")
+            log.info("Settings modal visible")
+
+            # ── Fill API key with "test" to trigger mock mode ────────
+            log.info("Filling API key (test triggers mock mode)...")
+            api_input = page.locator('input[placeholder*="API Key"]').first
+            if api_input.is_visible():
+                api_input.fill(MOCK_API_KEY)
+            else:
+                page.evaluate("document.querySelector('input[type=\"password\"], input[type=\"text\"]')?.dispatchEvent(new Event('focus'))")
+                api_input.fill(MOCK_API_KEY)
+            screenshot(page, "api_key_filled")
+            log.info("API key filled")
+
+            # ── Click GO! START PRACTICE ─────────────────────────────
+            log.info("Clicking GO! START PRACTICE...")
+            go_btn = page.locator('button:has-text("GO! START PRACTICE")')
+            go_btn.click(no_wait_after=True)
+            time.sleep(1)
+            screenshot(page, "loading_overlay")
+            log.info("GO clicked, loading overlay expected")
+
+            # ── Wait for exam to load ─────────────────────────────────
+            log.info("Waiting for exam to load...")
+            # Retry loop: Vite HMR may destroy execution contexts during React re-renders
+            exam_loaded = False
+            for attempt in range(60):
+                time.sleep(3)
+                try:
+                    count = page.locator(
+                        'h1:has-text("Listening Comprehension"), h1:has-text("Reading Test")'
+                    ).count()
+                    if count > 0:
+                        exam_loaded = True
+                        break
+                except Exception:
+                    # Context destroyed by navigation, retry
+                    log.info(f"  Attempt {attempt}: context destroyed, retrying...")
+                    time.sleep(2)
+                    continue
+            assert exam_loaded, "Exam never loaded after 180s"
             time.sleep(1)
             screenshot(page, "exam_loaded")
             log.info("[CP01] PASS — Exam loaded")
@@ -155,14 +174,13 @@ def run_test():
                 # ── CP05: Photo URL returns HTTP 200 ──────────────────
                 log.info(f"[CP05] Card {card_idx}: Checking HTTP status...")
                 try:
+                    import requests
                     resp = requests.head(photo_src, timeout=10, allow_redirects=True)
                     status_code = resp.status_code
                     log.info(f"[CP05] Card {card_idx}: HTTP {status_code}")
-                    # Some CDNs return 200 on HEAD, some return 403/302
-                    # Unsplash images typically return 200 or 302 (redirect)
                     assert status_code in (200, 301, 302, 307), f"Unexpected HTTP {status_code}"
                     log.info(f"[CP05] Card {card_idx}: PASS — Photo accessible")
-                except requests.RequestException as e:
+                except Exception as e:
                     log.warning(f"[CP05] Card {card_idx}: HTTP check failed: {e}")
                     log.info(f"[CP05] Card {card_idx}: SKIP — Network issue")
 

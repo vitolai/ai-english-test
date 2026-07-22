@@ -18,6 +18,7 @@ import {
   ensurePart5Questions,
   ensurePart6Questions,
   ensurePart7Questions,
+  ensureListeningCoherence,
   validateAndRebalanceDistribution,
   getExamTimes,
 } from '../services/ai.js';
@@ -311,6 +312,7 @@ Return ONLY valid JSON: { "questions": [...] }`;
           finalQuestions = ensurePart5Questions(finalQuestions);
           finalQuestions = ensurePart6Questions(finalQuestions);
           finalQuestions = ensurePart7Questions(finalQuestions);
+          finalQuestions = ensureListeningCoherence(finalQuestions);
 
           const times = getExamTimes(questionCount);
           const examData = { title: 'TOEIC Session', questions: finalQuestions, listeningTime: times.listeningTime, readingTime: times.readingTime };
