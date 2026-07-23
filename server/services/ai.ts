@@ -325,6 +325,7 @@ export function ensurePart7Questions(questions: Array<Record<string, unknown>>):
 // This normalizer unconditionally replaces the relevant fields so that every
 // listening question is guaranteed coherent with its source image/transcript.
 export function ensureListeningCoherence(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  if (!questions || questions.length === 0) return questions;
   let p1Idx = 0;
   let p2Idx = 0;
   let p3ConvIdx = 0;

@@ -43,6 +43,14 @@ const PORT = 3001;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+app.get('/storage/sessions/:sessionId/exam_data.json', (req: Request, res: Response) => {
+  const filePath = path.join(STORAGE_DIR, req.params.sessionId, 'exam_data.json');
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ error: 'Exam data not found. Generation may have failed or session does not exist.' });
+    return;
+  }
+  res.sendFile(filePath);
+});
 app.use('/storage', express.static(path.join(ROOT_DIR, 'storage')));
 
 // ============================================================
