@@ -1,0 +1,68 @@
+2026-07-24 05:13:34,587 [INFO] ======================================================================
+2026-07-24 05:13:34,588 [INFO] TEST: test_exam_flow.py — Full Exam Flow
+2026-07-24 05:13:34,588 [INFO] RUN_ID: 20260724_051334
+2026-07-24 05:13:34,588 [INFO] ======================================================================
+2026-07-24 05:13:36,343 [INFO] [CP01] Navigating to dashboard...
+2026-07-24 05:13:37,761 [INFO] SCREENSHOT 1: 01_dashboard_loaded.png
+2026-07-24 05:13:37,761 [INFO] [CP01] PASS — Dashboard heading visible
+2026-07-24 05:13:37,761 [INFO] [CP02] Selecting 10 questions...
+2026-07-24 05:13:38,208 [INFO] SCREENSHOT 2: 02_10_selected.png
+2026-07-24 05:13:38,208 [INFO] [CP02] PASS — 10-question count selected
+2026-07-24 05:13:38,208 [INFO] [CP03] Selecting Random source...
+2026-07-24 05:13:38,621 [INFO] SCREENSHOT 3: 03_random_selected.png
+2026-07-24 05:13:38,621 [INFO] [CP03] PASS — Random source selected
+2026-07-24 05:13:38,621 [INFO] [CP04] Clicking START EXAM...
+2026-07-24 05:13:38,930 [INFO] SCREENSHOT 4: 04_settings_modal.png
+2026-07-24 05:13:38,930 [INFO] [CP04] PASS — Settings modal visible
+2026-07-24 05:13:38,930 [INFO] [CP05] Filling API key (test triggers mock mode)...
+2026-07-24 05:13:39,085 [INFO] SCREENSHOT 5: 05_api_key_filled.png
+2026-07-24 05:13:39,085 [INFO] [CP05] PASS — API key filled
+2026-07-24 05:13:39,085 [INFO] [CP06] Clicking GO! START PRACTICE...
+2026-07-24 05:13:40,523 [INFO] SCREENSHOT 6: 06_loading_overlay.png
+2026-07-24 05:13:40,536 [INFO] [CP06] PASS — Loading overlay visible
+2026-07-24 05:13:40,548 [INFO] [CP07] Phase text: Exam Generation
+2026-07-24 05:13:40,623 [INFO] SCREENSHOT 7: 07_loading_phase.png
+2026-07-24 05:13:40,623 [INFO] [CP07] PASS — Loading phase visible
+2026-07-24 05:13:40,623 [INFO] [CP08] Waiting for exam to load...
+2026-07-24 05:13:45,263 [INFO] SCREENSHOT 8: 08_exam_loaded.png
+2026-07-24 05:13:45,264 [INFO] [CP08] PASS — Exam view loaded
+2026-07-24 05:13:45,264 [INFO] [CP09] Checking question cards...
+2026-07-24 05:13:45,269 [INFO] [CP09] Found 5 question cards
+2026-07-24 05:13:45,567 [INFO] SCREENSHOT 9: 09_question_cards.png
+2026-07-24 05:13:45,567 [INFO] [CP09] PASS — Question cards rendered
+2026-07-24 05:13:45,567 [INFO] [CP10] Checking Part labels...
+2026-07-24 05:13:45,601 [INFO] [CP10] Parts found: [1, 2, 3, 4]
+2026-07-24 05:13:45,895 [INFO] SCREENSHOT 10: 10_part_labels.png
+2026-07-24 05:13:45,895 [INFO] [CP10] PASS — Part labels visible
+2026-07-24 05:13:45,895 [INFO] [CP11] Checking audio players...
+2026-07-24 05:13:45,901 [INFO] [CP11] Audio elements: 5
+2026-07-24 05:13:46,189 [INFO] SCREENSHOT 11: 11_audio_players.png
+2026-07-24 05:13:46,189 [INFO] [CP11] PASS — Audio players check done
+2026-07-24 05:13:46,189 [INFO] [CP12] Answering all listening questions with 'C'...
+2026-07-24 05:13:46,511 [INFO] SCREENSHOT 12: 12_listening_answered.png
+2026-07-24 05:13:46,511 [INFO] [CP12] PASS — Listening questions answered
+2026-07-24 05:13:46,511 [INFO] [CP13] Checking PROCEED TO READING button...
+2026-07-24 05:13:47,356 [INFO] SCREENSHOT 13: 13_proceed_to_reading.png
+2026-07-24 05:13:47,357 [INFO] [CP13] PASS — PROCEED TO READING visible
+2026-07-24 05:13:47,357 [INFO] [CP14] Clicking PROCEED TO READING...
+2026-07-24 05:13:48,252 [INFO] SCREENSHOT 14: 14_reading_section.png
+2026-07-24 05:13:48,252 [INFO] [CP14] PASS — Reading section loaded
+2026-07-24 05:13:48,252 [INFO] [CP15] PASS — Reading Test heading visible
+2026-07-24 05:13:48,252 [INFO] [CP16] Answering all reading questions with 'A'...
+2026-07-24 05:13:48,570 [INFO] SCREENSHOT 15: 15_reading_answered.png
+2026-07-24 05:13:48,571 [INFO] [CP16] PASS — Reading questions answered
+2026-07-24 05:13:48,571 [INFO] [CP17] Clicking FINISH EXAM & VIEW SCORE...
+2026-07-24 05:13:49,419 [INFO] SCREENSHOT 16: 16_finish_button.png
+2026-07-24 05:13:49,516 [INFO] [CP17] PASS — FINISH EXAM clicked
+2026-07-24 05:13:49,516 [INFO] [CP18] Waiting for score page...
+2026-07-24 05:13:50,255 [INFO] SCREENSHOT 17: 17_score_page.png
+2026-07-24 05:13:50,255 [INFO] [CP18] PASS — Exam Completed heading visible
+2026-07-24 05:13:50,274 [INFO] [CP19] Score: Score: 0 / 10 (0%)
+2026-07-24 05:13:50,505 [INFO] SCREENSHOT 18: 18_score_text.png
+2026-07-24 05:13:50,505 [INFO] [CP19] PASS — Score text visible
+2026-07-24 05:13:50,523 [INFO] [CP20] Correct: 0
+2026-07-24 05:13:50,533 [INFO] [CP20] Incorrect: 10
+2026-07-24 05:13:50,533 [INFO] [CP20] PASS — Summary counts visible
+2026-07-24 05:13:50,534 [INFO] ======================================================================
+2026-07-24 05:13:50,534 [INFO] RESULT: ALL 20 CRITICAL POINTS PASSED
+2026-07-24 05:13:50,534 [INFO] ======================================================================

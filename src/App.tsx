@@ -59,6 +59,15 @@ const App: React.FC = () => {
         }
     };
 
+    // Auto-load session from ?session= URL param (used by E2E tests)
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const sid = params.get('session');
+        if (sid && view === 'dashboard') {
+            loadSession(sid);
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
     useEffect(() => {
         let interval: ReturnType<typeof setInterval>;
         if (loading && sessionId) {

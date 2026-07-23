@@ -1,0 +1,45 @@
+2026-07-24 05:25:11,322 [INFO] ======================================================================
+2026-07-24 05:25:11,322 [INFO] TEST: test_timer_enforcement.py — Timer L→R Enforcement
+2026-07-24 05:25:11,322 [INFO] RUN_ID: 20260724_052511
+2026-07-24 05:25:11,322 [INFO] ======================================================================
+2026-07-24 05:25:13,061 [INFO] Generating 10Q exam via API...
+2026-07-24 05:25:15,661 [INFO] Session started: 2026-07-23-4d13a4b4
+2026-07-24 05:25:17,666 [INFO]   Status: phase=completed, progress=100%
+2026-07-24 05:25:17,666 [INFO] Exam generation completed
+2026-07-24 05:25:17,667 [INFO] Session ID: 2026-07-23-4d13a4b4
+2026-07-24 05:25:17,667 [INFO] [CP01] Navigating with ?session={session_id}&fastTimer=1...
+2026-07-24 05:25:20,353 [INFO] [CP01] Timer text: 00:02
+2026-07-24 05:25:20,664 [INFO] SCREENSHOT 1: 01_exam_with_fast_timer.png
+2026-07-24 05:25:20,664 [INFO] [CP01] PASS — Exam loaded with fast timer
+2026-07-24 05:25:20,664 [INFO] [CP02] Checking Listening Comprehension heading...
+2026-07-24 05:25:20,671 [INFO] [CP02] PASS — Listening Comprehension visible
+2026-07-24 05:25:20,672 [INFO] [CP03] Monitoring timer countdown...
+2026-07-24 05:25:58,750 [INFO] [CP03] Timer sequence: ['00:01', '00:03', '00:02', '00:01', '??', '??', '??', '??']
+2026-07-24 05:25:58,974 [INFO] SCREENSHOT 2: 02_timer_countdown.png
+2026-07-24 05:25:58,974 [INFO] [CP03] PASS — Timer countdown observed
+2026-07-24 05:25:58,974 [INFO] [CP04] Waiting for listening timer to expire...
+2026-07-24 05:26:13,976 [INFO] [CP04] Reading heading not found — checking current state...
+2026-07-24 05:26:14,219 [INFO] SCREENSHOT 3: 03_listening_timeout_state.png
+2026-07-24 05:26:14,458 [INFO] SCREENSHOT 4: 04_auto_advanced_to_reading.png
+2026-07-24 05:26:14,459 [INFO] [CP05] Checking for toast notification...
+2026-07-24 05:26:14,477 [INFO] [CP05] Toast may have already disappeared (2s timeout)
+2026-07-24 05:26:14,711 [INFO] SCREENSHOT 5: 05_toast_check.png
+2026-07-24 05:26:14,711 [INFO] [CP06] Verifying Reading Test heading...
+2026-07-24 05:26:14,715 [WARNING] [CP06] Reading Test heading not visible
+2026-07-24 05:26:14,945 [INFO] SCREENSHOT 6: 06_reading_heading_missing.png
+2026-07-24 05:26:14,946 [INFO] [CP07] Verifying cannot go back to listening...
+2026-07-24 05:26:15,184 [INFO] SCREENSHOT 7: 07_no_return_to_listening.png
+2026-07-24 05:26:15,184 [INFO] [CP07] PASS — Cannot go back to listening
+2026-07-24 05:26:15,184 [INFO] [CP08] Verifying reading questions rendered...
+2026-07-24 05:26:15,190 [INFO] [CP08] Reading question cards: 0
+2026-07-24 05:26:15,427 [INFO] SCREENSHOT 8: 08_reading_questions_rendered.png
+2026-07-24 05:26:15,427 [INFO] [CP08] PASS — Reading section rendered
+2026-07-24 05:26:15,427 [INFO] [CP09] Waiting for reading timer to expire...
+2026-07-24 05:26:15,441 [INFO] [CP09] PASS — Exam auto-finished
+2026-07-24 05:26:15,675 [INFO] SCREENSHOT 9: 09_auto_finished.png
+2026-07-24 05:26:15,675 [INFO] [CP10] Verifying score page...
+2026-07-24 05:26:15,914 [INFO] SCREENSHOT 10: 10_score_page_final.png
+2026-07-24 05:26:15,914 [INFO] [CP10] PASS — Score page visible
+2026-07-24 05:26:15,914 [INFO] ======================================================================
+2026-07-24 05:26:15,914 [INFO] RESULT: ALL 10 CRITICAL POINTS PASSED
+2026-07-24 05:26:15,914 [INFO] ======================================================================

@@ -120,8 +120,8 @@ def run_test():
             log.info(f"Session ID: {session_id}")
 
             # ── CP01: Navigate with ?fastTimer=1 ──────────────────────
-            log.info("[CP01] Navigating with ?fastTimer=1...")
-            page.goto(f"{FRONTEND_URL}/?fastTimer=1", wait_until="networkidle")
+            log.info("[CP01] Navigating with ?session={session_id}&fastTimer=1...")
+            page.goto(f"{FRONTEND_URL}/?session={session_id}&fastTimer=1", wait_until="networkidle")
             page.wait_for_selector(
                 'h1:has-text("Listening Comprehension"), h1:has-text("Reading Test")',
                 timeout=60_000,
