@@ -18,6 +18,7 @@ import {
   ensurePart5Questions,
   ensurePart6Questions,
   ensurePart7Questions,
+  ensureRandomModeBusiness,
   ensureListeningCoherence,
   validateAndRebalanceDistribution,
   getExamTimes,
@@ -43,12 +44,13 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
   }
 
   router.post('/api/generate', async (req, res) => {
-    const { seedText, questionCount, model, apiKey, config } = req.body as {
+    const { seedText, questionCount, model, apiKey, config, sourceType } = req.body as {
       seedText?: string;
       questionCount: number;
       model?: string;
       apiKey?: string;
       config?: { providerId?: string; baseURL?: string; fallbacks?: Array<{ id: string; model: string; apiKey: string; baseURL?: string }> };
+      sourceType?: string;
     };
 
     const session_id = `${new Date().toISOString().split('T')[0]}-${uuidv4().slice(0, 8)}`;
@@ -304,6 +306,7 @@ Return ONLY valid JSON: { "questions": [...] }`;
         finalQuestions = ensurePart5Questions(finalQuestions);
         finalQuestions = ensurePart6Questions(finalQuestions);
         finalQuestions = ensurePart7Questions(finalQuestions);
+        finalQuestions = ensureRandomModeBusiness(finalQuestions, sourceType);
         finalQuestions = ensureListeningCoherence(finalQuestions);
 
         const times = getExamTimes(questionCount);

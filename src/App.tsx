@@ -139,7 +139,8 @@ const App: React.FC = () => {
                                 providerId: config.provider,
                                 baseURL: config.apiUrl 
                             },
-                            maxStorage
+                            maxStorage,
+                            sourceType: source
                         });
             
             console.log('App: Generation started', res.data);

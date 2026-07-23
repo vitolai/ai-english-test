@@ -260,6 +260,53 @@ export function ensurePart5Questions(questions: Array<Record<string, unknown>>):
   });
 }
 
+// Check if P6 question keywords appear in the passage text.
+// Returns true if at least `threshold` content words from the question appear in the passage.
+function isP6Aligned(passage: string, question: string, threshold = 2): boolean {
+  const qWords = extractKeywords(question);
+  if (qWords.length === 0) return true; // no keywords to check
+  const passageLower = passage.toLowerCase();
+  const matched = qWords.filter(w => passageLower.includes(w));
+  return matched.length >= Math.min(threshold, qWords.length);
+}
+
+// Find the best matching MOCK_PART6 entry for a given passage, then return
+// one of its questions that aligns with that passage.
+function regenerateP6QuestionFromPassage(
+  passage: string,
+  fallbackIdx: number,
+): { question: string; options: string[]; answer: string } {
+  // Try to find a MOCK_PART6 entry whose passage is closest to ours
+  for (const entry of MOCK_PART6_PASSAGES) {
+    if (entry.passage === passage) {
+      // Exact match — pick a question that aligns with this passage
+      for (const q of entry.questions) {
+        if (isP6Aligned(passage, q.question)) return q;
+      }
+      return entry.questions[0];
+    }
+  }
+
+  // No exact match — find the entry whose passage shares the most keywords
+  const passageKws = new Set(extractKeywords(passage));
+  let bestEntry = MOCK_PART6_PASSAGES[fallbackIdx % MOCK_PART6_PASSAGES.length];
+  let bestScore = 0;
+  for (const entry of MOCK_PART6_PASSAGES) {
+    const entryKws = extractKeywords(entry.passage);
+    const overlap = entryKws.filter(k => passageKws.has(k)).length;
+    if (overlap > bestScore) {
+      bestScore = overlap;
+      bestEntry = entry;
+    }
+  }
+
+  // Pick the question from the best entry that aligns with our passage
+  for (const q of bestEntry.questions) {
+    if (isP6Aligned(passage, q.question)) return q;
+  }
+  return bestEntry.questions[0];
+}
+
 export function ensurePart6Questions(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
   let p6Index = 0;
   return questions.map(q => {
@@ -283,6 +330,18 @@ export function ensurePart6Questions(questions: Array<Record<string, unknown>>):
           q['answer'] = entry.questions[localIdx].answer;
         }
         p6Index++;
+      } else {
+        // Passage and question both exist — verify alignment
+        const passage = (q['passage'] as string) || '';
+        const question = (q['question'] as string) || '';
+        if (!isP6Aligned(passage, question)) {
+          const replacement = regenerateP6QuestionFromPassage(passage, p6Index);
+          console.warn(`[P6] Question keywords not in passage — regenerating (id=${q['id']})`);
+          q['question'] = replacement.question;
+          q['options'] = replacement.options;
+          q['answer'] = replacement.answer;
+        }
+        p6Index++;
       }
     }
     return q;
@@ -296,6 +355,109 @@ function stripHtml(raw: string): string {
     .replace(/<br\s*\/?>/gi, ' ')
     .replace(/<[^>]+>/g, '')
     .trim();
+}
+
+// P7 passage templates keyed by rough topic extracted from the question.
+// Each template is 150–300 words and contains the key facts referenced in
+// typical TOEIC Part 7 questions so the examinee always has something to read.
+const P7_PASSAGE_TEMPLATES: Array<{ keywords: string[]; passage: string }> = [
+  {
+    keywords: ['park', 'parking', 'garage', 'lot'],
+    passage: 'NOTICE TO ALL EMPLOYEES\n\nStarting next Monday, new parking regulations will take effect across all company facilities. The underground garage on Main Street will be reserved exclusively for employees with a valid parking permit. Visitors must use the designated visitor lot located on the south side of the building. The parking area near the old building will be permanently closed for a construction project expected to last six months.\n\nEmployees who currently park in the affected areas should update their parking permits by visiting the Facilities office on the second floor. Permits can also be renewed online through the company intranet. The monthly parking fee remains unchanged at $75 per month.\n\nPlease plan your commute accordingly and allow extra time to locate available spaces during the first week of the new arrangement. Carpooling is strongly encouraged, and designated carpool spots will be available near the main entrance.\n\nFor questions or concerns, contact the Facilities Department at extension 4500 or email facilities@company.com.',
+  },
+  {
+    keywords: ['training', 'workshop', 'seminar', 'course', 'compliance'],
+    passage: 'MEMORANDUM\n\nAll employees are required to complete the annual compliance training program by the end of this quarter. This year\'s program covers updated workplace safety protocols, data privacy regulations, and anti-harassment policies. The training consists of four online modules, each approximately 30 minutes in duration.\n\nNew employees who joined after January 1 must complete an additional orientation module covering company policies and benefits enrollment. Department managers are responsible for ensuring all team members complete the required courses within the specified timeframe.\n\nParticipants who finish all modules before the deadline will receive a certificate of completion and a $100 bonus added to their next paycheck. Those who fail to complete the training by the deadline may face disciplinary action as outlined in the employee handbook.\n\nAccess the training portal at training.company.com using your employee credentials. If you experience technical difficulties, contact the IT Help Desk at ext. 2200. For questions about training content, reach out to Human Resources at hr@company.com.',
+  },
+  {
+    keywords: ['meeting', 'conference', 'schedule', 'agenda', 'reschedule'],
+    passage: 'INTEROFFICE MEMO\n\nPlease be advised that the quarterly planning meeting originally scheduled for Wednesday has been rescheduled to Thursday at 2:00 PM in Conference Room B. The agenda has been updated to include a review of third-quarter financial results, departmental budget proposals for the upcoming fiscal year, and a discussion of the new client acquisition strategy.\n\nAll department heads are expected to prepare a brief status report covering their team\'s key achievements and challenges from the past quarter. Please bring printed copies of your reports as well as a digital version for the shared drive.\n\nThe meeting is expected to last approximately two hours. A working lunch will be provided beginning at 1:30 PM for those who wish to eat before the session starts. Please RSVP to the executive assistant by end of business Tuesday so that catering can be arranged accordingly.\n\nRemote participants may join via the video conference link that will be sent to your email. For any scheduling conflicts, notify your supervisor and the meeting organizer as soon as possible.',
+  },
+  {
+    keywords: ['hire', 'hiring', 'recruit', 'position', 'job', 'candidate', 'applicant'],
+    passage: 'JOB POSTING — MARKETING COORDINATOR\n\nApex Solutions is seeking a motivated Marketing Coordinator to join our expanding marketing team based in the downtown office. The ideal candidate will have at least two years of professional experience in digital marketing, content creation, or brand management. A bachelor\'s degree in marketing, communications, or a related field is preferred.\n\nKey responsibilities include managing social media accounts, coordinating email marketing campaigns, analyzing campaign performance metrics, and supporting the creative team with promotional materials. Strong written and verbal communication skills are essential. Proficiency with marketing automation tools such as HubSpot or Marketo is highly desirable.\n\nThis is a full-time permanent position with a competitive salary range of $45,000 to $55,000 annually, commensurate with experience. Benefits include health insurance, a 401(k) plan with company match, paid time off, and professional development opportunities.\n\nInterested candidates should submit their resume and a cover letter to careers@apexsolutions.com by the end of this month. Please include "Marketing Coordinator Application" in the subject line. Only qualified applicants will be contacted for an interview.',
+  },
+  {
+    keywords: ['policy', 'update', 'change', 'regulation', 'rule', 'procedure'],
+    passage: 'COMPANY POLICY UPDATE\n\nEffective immediately, the following updates to company policy have been approved by the Board of Directors. All employees are expected to review these changes and acknowledge receipt through the employee portal by end of business Friday.\n\nThe expense reporting system has been upgraded to a new digital platform. All expense submissions must now be entered through the online portal rather than paper forms. Receipts should be uploaded as digital images. The approval workflow remains the same, with manager review required for expenses exceeding $200.\n\nThe remote work policy has been expanded to allow up to three days per week of remote work for eligible positions. Employees must submit a remote work request to their supervisor at least two weeks in advance. High-speed internet access and a quiet workspace are required for remote days.\n\nThe dress code has been updated to business casual on all days except client meeting days, when business professional attire is expected. Questions about these policy changes should be directed to Human Resources at hr@company.com or extension 3100.',
+  },
+  {
+    keywords: ['product', 'launch', 'release', 'new product', 'introduce'],
+    passage: 'PRODUCT LAUNCH ANNOUNCEMENT\n\nWe are pleased to announce the upcoming launch of our newest product, the SmartTrack Pro, scheduled for release in the third quarter. After eighteen months of research and development, the engineering team has delivered a solution that addresses the most common feedback from our customer surveys.\n\nThe SmartTrack Pro features an advanced analytics dashboard, real-time collaboration tools, and seamless integration with popular enterprise software platforms. Beta testing with select clients has shown a 35% improvement in workflow efficiency compared to our previous model.\n\nThe marketing team has prepared a comprehensive launch strategy including digital advertising, social media campaigns, influencer partnerships, and targeted email sequences. The launch event will be held at the Downtown Convention Center on the release date, with live demonstrations and Q&A sessions throughout the day.\n\nPre-orders are now open for existing customers at a special early-bird price. New customers can register for a free trial on our website. For wholesale inquiries and partnership opportunities, contact the sales team at sales@company.com.',
+  },
+  {
+    keywords: ['client', 'customer', 'service', 'support', 'complaint', 'feedback'],
+    passage: 'CUSTOMER SERVICE BULLETIN\n\nThe Customer Service Department has implemented several improvements based on recent client feedback surveys. Response times for email inquiries have been reduced from 48 hours to 24 hours, and phone support hours have been extended to include Saturday mornings from 9 AM to 1 PM.\n\nA new ticketing system has been deployed to track all customer interactions and ensure that no request falls through the cracks. Each ticket is assigned a unique reference number that customers can use to check the status of their inquiry online.\n\nThe returns and exchange policy has been simplified. Customers now have 30 days from the date of purchase to return unopened items for a full refund. Items that have been opened may be exchanged for store credit within 15 days. All returns must include the original receipt and be in their original packaging.\n\nFrequently asked questions and self-service troubleshooting guides are available on our website at support.company.com. For urgent matters, customers can reach the support team directly at 1-800-555-HELP or via live chat during business hours.',
+  },
+];
+
+// Stop words to ignore when checking passage-question alignment
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+  'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+  'should', 'may', 'might', 'shall', 'can', 'need', 'dare', 'ought',
+  'used', 'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from',
+  'as', 'into', 'through', 'during', 'before', 'after', 'above', 'below',
+  'between', 'out', 'off', 'over', 'under', 'again', 'further', 'then',
+  'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'both',
+  'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
+  'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just',
+  'don', 'now', 'and', 'but', 'or', 'if', 'this', 'that', 'these',
+  'those', 'it', 'its', 'i', 'me', 'my', 'we', 'our', 'you', 'your',
+  'he', 'him', 'his', 'she', 'her', 'they', 'them', 'their', 'what',
+  'which', 'who', 'whom', 'about', 'up', 'also', 'while',
+]);
+
+function extractKeywords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(w => w.length > 3 && !STOP_WORDS.has(w));
+}
+
+function findPassageTemplate(keywords: string[]): string | null {
+  for (const template of P7_PASSAGE_TEMPLATES) {
+    const matchCount = template.keywords.filter(kw =>
+      keywords.some(k => k.includes(kw) || kw.includes(k))
+    ).length;
+    if (matchCount > 0) return template.passage;
+  }
+  return null;
+}
+
+function buildPassageFromQuestion(q: Record<string, unknown>): string {
+  const question = (q['question'] as string) || '';
+  const options = (q['options'] as string[]) || [];
+  const correctIdx = 'ABCD'.indexOf((q['answer'] as string) || 'A');
+  const correctAnswer = options[correctIdx >= 0 ? correctIdx : 0] || '';
+
+  const keywords = extractKeywords(`${question} ${options.join(' ')}`);
+  const templatePassage = findPassageTemplate(keywords);
+  if (templatePassage) return templatePassage;
+
+  // Fallback: build a synthetic passage embedding the question context
+  const sentences = [
+    `The following notice is posted for all employees and staff members.`,
+    question.replace(/\?+$/, '.'),
+    `According to the updated guidelines, the correct procedure is: ${correctAnswer.toLowerCase()}.`,
+    `All personnel are expected to follow these instructions carefully.`,
+    `Please refer to the company handbook for additional details and reference materials.`,
+    `If you have further questions, contact the relevant department during regular business hours.`,
+    `These guidelines apply to all departments and locations across the organization.`,
+    `Failure to comply may result in review by the Human Resources department.`,
+    `Updated information is available on the company intranet for your convenience.`,
+    `Thank you for your attention to this important matter and your continued cooperation.`,
+  ];
+
+  // Pad to ~150 words by repeating context
+  while (sentences.join(' ').split(/\s+/).length < 150) {
+    sentences.splice(Math.floor(sentences.length / 2), 0,
+      `Management has reviewed the current procedures and determined that these updates are necessary for operational efficiency.`
+    );
+  }
+
+  return sentences.join(' ');
 }
 
 export function ensurePart7Questions(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
@@ -312,7 +474,78 @@ export function ensurePart7Questions(questions: Array<Record<string, unknown>>):
           typeof opt === 'string' ? stripHtml(opt) : opt
         );
       }
+      // P7 passage MUST be non-empty: generate from context if missing
+      const passage = (q['passage'] as string) || '';
+      if (passage.trim().length === 0) {
+        q['passage'] = buildPassageFromQuestion(q);
+      }
     }
+    return q;
+  });
+}
+
+// ============================================================
+// RANDOM MODE BUSINESS ENFORCEMENT
+// ============================================================
+// When sourceType is 'random', the AI sometimes generates non-business
+// content (politics, weather, sports). This normalizer replaces P6/P7
+// questions whose passage/question contains non-business keywords with
+// business-themed mock data. Only applies for sourceType='random';
+// web-sourced and self-import modes keep AI content as-is.
+const NON_BUSINESS_SIGNALS = [
+  // politics
+  'election', 'president', 'congress', 'senator', 'democrat', 'republican',
+  'legislation', 'ballot', 'campaign', 'political', 'vote', 'voting',
+  // weather
+  'weather', 'forecast', 'temperature', 'humidity', 'rainfall', 'storm',
+  'hurricane', 'tornado', 'blizzard', 'sunny', 'cloudy', 'precipitation',
+  // sports
+  'championship', 'tournament', 'playoff', 'stadium', 'athlete', 'coach',
+  'quarterback', 'touchdown', 'home run', 'strikeout', 'goalkeeper',
+  'olympic', 'medal', 'referee', 'scoreboard',
+  // entertainment
+  'concert', 'celebrity', 'movie', 'film', 'album', 'box office',
+  'grammy', 'oscar', 'emmy', 'broadway',
+];
+
+function isNonBusinessContent(text: string): boolean {
+  const lower = text.toLowerCase();
+  let hits = 0;
+  for (const signal of NON_BUSINESS_SIGNALS) {
+    if (lower.includes(signal)) hits++;
+  }
+  // Require at least 2 non-business signals to avoid false positives
+  return hits >= 2;
+}
+
+function pickRandomBusinessQuestion(): { passage: string; question: string; options: string[]; answer: string } {
+  const entry = MOCK_PART6_PASSAGES[Math.floor(Math.random() * MOCK_PART6_PASSAGES.length)];
+  const qIdx = Math.floor(Math.random() * entry.questions.length);
+  return { passage: entry.passage, ...entry.questions[qIdx] };
+}
+
+export function ensureRandomModeBusiness(
+  questions: Array<Record<string, unknown>>,
+  sourceType?: string,
+): Array<Record<string, unknown>> {
+  if (sourceType && sourceType !== 'random') return questions;
+
+  return questions.map(q => {
+    const part = q['part'] as number;
+    if (part !== 6 && part !== 7) return q;
+
+    const passage = (q['passage'] as string) || '';
+    const question = (q['question'] as string) || '';
+
+    if (isNonBusinessContent(passage) || isNonBusinessContent(question)) {
+      console.warn(`[RandomMode] Non-business content detected in part ${part} (id=${q['id']}) — overriding with mock business data`);
+      const mock = pickRandomBusinessQuestion();
+      q['passage'] = mock.passage;
+      q['question'] = mock.question;
+      q['options'] = mock.options;
+      q['answer'] = mock.answer;
+    }
+
     return q;
   });
 }
