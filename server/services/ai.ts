@@ -326,65 +326,52 @@ export function ensurePart7Questions(questions: Array<Record<string, unknown>>):
 // listening question is guaranteed coherent with its source image/transcript.
 export function ensureListeningCoherence(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
   if (!questions || questions.length === 0) return questions;
-  let p1Idx = 0;
-  let p2Idx = 0;
-  let p3ConvIdx = 0;
-  let p3QIdx = 0;
-  let p4TalkIdx = 0;
-  let p4QIdx = 0;
+  let p3GroupIdx = 0;
+  let p3RandomConv = MOCK_PART3_CONVERSATIONS[Math.floor(Math.random() * MOCK_PART3_CONVERSATIONS.length)];
+  let p4GroupIdx = 0;
+  let p4RandomTalk = MOCK_PART4_TALKS[Math.floor(Math.random() * MOCK_PART4_TALKS.length)];
 
   return questions.map(q => {
     const part = q['part'] as number;
     const type = q['type'] as string;
 
     if (type === 'listening' && part === 1) {
-      // P1: always override image + options + answer from PART1_DATA
-      const d = PART1_DATA[p1Idx % PART1_DATA.length];
+      const d = PART1_DATA[Math.floor(Math.random() * PART1_DATA.length)];
       q['image'] = d.image;
       q['options'] = [...d.options];
       q['answer'] = d.answer;
-      p1Idx++;
     }
 
     if (type === 'listening' && part === 2) {
-      // P2: always override transcript + options from PART2_DATA
-      // (MOCK_PART2_QUESTIONS in the spec = PART2_DATA here)
-      const d = PART2_DATA[p2Idx % PART2_DATA.length];
+      const d = PART2_DATA[Math.floor(Math.random() * PART2_DATA.length)];
       q['transcript'] = d.transcript;
       q['options'] = [...d.options];
-      p2Idx++;
     }
 
     if (type === 'listening' && part === 3) {
-      // P3: always override transcript + options; override question if mismatch
-      const conv = MOCK_PART3_CONVERSATIONS[p3ConvIdx % MOCK_PART3_CONVERSATIONS.length];
-      const mockQ = conv.questions[p3QIdx % conv.questions.length];
-      q['transcript'] = conv.transcript;
+      if (p3GroupIdx % 3 === 0) {
+        p3RandomConv = MOCK_PART3_CONVERSATIONS[Math.floor(Math.random() * MOCK_PART3_CONVERSATIONS.length)];
+      }
+      const mockQ = p3RandomConv.questions[p3GroupIdx % 3];
+      q['transcript'] = p3RandomConv.transcript;
       q['options'] = [...mockQ.options];
       if (q['question'] !== mockQ.question) {
         q['question'] = mockQ.question;
       }
-      p3QIdx++;
-      if (p3QIdx >= 3) {
-        p3QIdx = 0;
-        p3ConvIdx++;
-      }
+      p3GroupIdx++;
     }
 
     if (type === 'listening' && part === 4) {
-      // P4: always override transcript + options; override question if mismatch
-      const talk = MOCK_PART4_TALKS[p4TalkIdx % MOCK_PART4_TALKS.length];
-      const mockQ = talk.questions[p4QIdx % talk.questions.length];
-      q['transcript'] = talk.transcript;
+      if (p4GroupIdx % 3 === 0) {
+        p4RandomTalk = MOCK_PART4_TALKS[Math.floor(Math.random() * MOCK_PART4_TALKS.length)];
+      }
+      const mockQ = p4RandomTalk.questions[p4GroupIdx % 3];
+      q['transcript'] = p4RandomTalk.transcript;
       q['options'] = [...mockQ.options];
       if (q['question'] !== mockQ.question) {
         q['question'] = mockQ.question;
       }
-      p4QIdx++;
-      if (p4QIdx >= 3) {
-        p4QIdx = 0;
-        p4TalkIdx++;
-      }
+      p4GroupIdx++;
     }
 
     return q;

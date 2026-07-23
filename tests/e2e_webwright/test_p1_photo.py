@@ -106,31 +106,19 @@ def run_test():
 
             # ── Click GO! START PRACTICE ─────────────────────────────
             log.info("Clicking GO! START PRACTICE...")
-            go_btn = page.locator('button:has-text("GO! START PRACTICE")')
-            go_btn.click(no_wait_after=True)
+            go_btn = page.get_by_role("button", name="GO! START PRACTICE")
+            go_btn.scroll_into_view_if_needed()
+            time.sleep(0.2)
+            go_btn.click()
             time.sleep(1)
             screenshot(page, "loading_overlay")
-            log.info("GO clicked, loading overlay expected")
 
             # ── Wait for exam to load ─────────────────────────────────
             log.info("Waiting for exam to load...")
-            # Retry loop: Vite HMR may destroy execution contexts during React re-renders
-            exam_loaded = False
-            for attempt in range(60):
-                time.sleep(3)
-                try:
-                    count = page.locator(
-                        'h1:has-text("Listening Comprehension"), h1:has-text("Reading Test")'
-                    ).count()
-                    if count > 0:
-                        exam_loaded = True
-                        break
-                except Exception:
-                    # Context destroyed by navigation, retry
-                    log.info(f"  Attempt {attempt}: context destroyed, retrying...")
-                    time.sleep(2)
-                    continue
-            assert exam_loaded, "Exam never loaded after 180s"
+            page.wait_for_selector(
+                'h1:has-text("Listening Comprehension"), h1:has-text("Reading Test")',
+                timeout=120_000,
+            )
             time.sleep(1)
             screenshot(page, "exam_loaded")
             log.info("[CP01] PASS — Exam loaded")
