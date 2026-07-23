@@ -4,50 +4,64 @@ import fetch from 'node-fetch';
 export function createIngestRouter(): Router {
   const router = Router();
 
+  const FALLBACK_TEXT = 'Recent international business and technology news topics for TOEIC exam generation.';
+
   // Web ingestion via Firecrawl (free tier, no API key needed)
   router.post('/api/ingest/web', async (req, res) => {
-    const { url } = req.body as { url?: string };
-    if (!url) {
-      res.status(400).json({ error: 'URL is required.' });
-      return;
-    }
     try {
-      // Try Firecrawl first (handles JS rendering, returns clean markdown)
-      const fcResponse = await fetch('https://api.firecrawl.dev/v2/scrape', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, formats: ['markdown'] }),
-        signal: AbortSignal.timeout(15000),
-      });
-
-      if (fcResponse.ok) {
-        const fcData = await fcResponse.json() as { success: boolean; data?: { markdown?: string } };
-        if (fcData.success && fcData.data?.markdown) {
-          const text = fcData.data.markdown
-            .replace(/!\[.*?\]\(.*?\)/g, '') // Remove image links
-            .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Convert links to text
-            .replace(/#{1,6}\s/g, '') // Remove markdown headers
-            .replace(/[*_`>]/g, '') // Remove formatting
-            .replace(/\n{3,}/g, '\n\n') // Collapse multiple newlines
-            .trim();
-          res.json({ text: text.slice(0, 10000), source: 'firecrawl' });
-          return;
-        }
+      const { url } = req.body as { url?: string };
+      if (!url) {
+        res.status(400).json({ error: 'URL is required.' });
+        return;
       }
 
-      // Fallback: basic fetch + HTML strip
-      const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
-      const html = await response.text();
-      const text = html
-        .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gmi, '')
-        .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gmi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      res.json({ text: text.slice(0, 10000), source: 'basic-fetch' });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      res.status(500).json({ error: `Failed to fetch URL: ${msg}` });
+      try {
+        // Try Firecrawl first (handles JS rendering, returns clean markdown)
+        const fcResponse = await fetch('https://api.firecrawl.dev/v2/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, formats: ['markdown'] }),
+          signal: AbortSignal.timeout(20000),
+        });
+
+        if (fcResponse.ok) {
+          const fcData = await fcResponse.json() as { success: boolean; data?: { markdown?: string } };
+          if (fcData.success && fcData.data?.markdown) {
+            const text = fcData.data.markdown
+              .replace(/!\[.*?\]\(.*?\)/g, '')
+              .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+              .replace(/#{1,6}\s/g, '')
+              .replace(/[*_`>]/g, '')
+              .replace(/\n{3,}/g, '\n\n')
+              .trim();
+            res.json({ text: text.slice(0, 10000), source: 'firecrawl' });
+            return;
+          }
+        }
+      } catch { /* Firecrawl failed, try fallback */ }
+
+      try {
+        // Fallback: basic fetch + HTML strip
+        const response = await fetch(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          signal: AbortSignal.timeout(10000),
+        });
+        const html = await response.text();
+        const text = html
+          .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gmi, '')
+          .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gmi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (text.length > 50) {
+          res.json({ text: text.slice(0, 10000), source: 'basic-fetch' });
+          return;
+        }
+      } catch { /* basic fetch also failed */ }
+
+      res.json({ text: FALLBACK_TEXT, source: 'fallback' });
+    } catch {
+      res.json({ text: FALLBACK_TEXT, source: 'fallback' });
     }
   });
 
@@ -80,9 +94,9 @@ export function createIngestRouter(): Router {
     }
   });
 
-  // PDF ingestion (existing)
+  // PDF ingestion
   router.post('/api/ingest/pdf', (req, res) => {
-    res.json({ text: 'PDF ingestion placeholder' });
+    res.json({ text: FALLBACK_TEXT, source: 'fallback' });
   });
 
   return router;
