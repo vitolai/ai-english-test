@@ -51,9 +51,8 @@ def generate_mock(q=10):
 
 
 def generate_real(q, api_key):
-    """POST a real-AI generation request using the same payload shape the
-    frontend sends for OpenRouter. The API key is read from the environment at
-    call time and is never persisted in this file."""
+    """POST a real-AI generation request (returns immediately with session_id),
+    then poll /api/status/:id until completed or failed."""
     payload = json.dumps({
         "seedText": "International business environment covering office interactions, travel, logistics, corporate meetings, and diverse professional scenarios.",
         "questionCount": q,
@@ -65,9 +64,29 @@ def generate_real(q, api_key):
     if not ok:
         return None
     try:
-        return json.loads(out).get("session_id")
+        session_id = json.loads(out).get("session_id")
     except:
         return None
+    if not session_id:
+        return None
+    timeout = get_real_timeout(q)
+    start = time.time()
+    while time.time() - start < timeout:
+        ok, s = run("curl -s http://localhost:3001/api/status/{}".format(session_id))
+        if ok:
+            try:
+                data = json.loads(s)
+                phase = data.get("phase", "")
+                if phase == "completed":
+                    return session_id
+                if phase == "error":
+                    print("  FAIL Generation error: {}".format(data.get("message", "unknown")))
+                    return None
+            except:
+                pass
+        time.sleep(2)
+    print("  FAIL Generation timed out after {}s".format(timeout))
+    return None
 
 
 def get_real_timeout(q):

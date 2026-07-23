@@ -43,7 +43,7 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
     sendSSE(sessionId, { type: 'progress', ...status });
   }
 
-  router.post('/api/generate', async (req, res) => {
+  router.post('/api/generate', (req, res) => {
     const { seedText, questionCount, model, apiKey, config, sourceType } = req.body as {
       seedText?: string;
       questionCount: number;
@@ -59,12 +59,37 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
     const audioDir = path.join(sessionDir, 'audio');
     fs.mkdirSync(audioDir, { recursive: true });
 
-    sessionStatus.set(session_id, { phase: 'starting', progress: 0, message: 'Initializing...' });
+    const skeletonPath = path.join(sessionDir, 'exam_data.json');
+    fs.writeFileSync(skeletonPath, JSON.stringify({ title: 'TOEIC Session', questions: [], status: 'generating' }, null, 2));
+
+    setStatus(session_id, { phase: 'generating', progress: 0, message: 'Initializing...' });
 
     console.log(`[Generate] ${questionCount} questions | session=${session_id}`);
 
-    req.setTimeout(0);
+    res.json({ session_id });
 
+    runBackgroundGenerate(session_id, sessionDir, audioDir, skeletonPath, {
+      seedText, questionCount, model, apiKey, config, sourceType,
+    }).catch(err => {
+      console.error('[Background] Unhandled error:', err);
+    });
+  });
+
+  async function runBackgroundGenerate(
+    session_id: string,
+    sessionDir: string,
+    audioDir: string,
+    skeletonPath: string,
+    params: {
+      seedText?: string;
+      questionCount: number;
+      model?: string;
+      apiKey?: string;
+      config?: { providerId?: string; baseURL?: string; fallbacks?: Array<{ id: string; model: string; apiKey: string; baseURL?: string }> };
+      sourceType?: string;
+    },
+  ) {
+    const { seedText, questionCount, model, apiKey, config, sourceType } = params;
     const maxValidationRetries = 5;
 
     for (let validationAttempt = 1; validationAttempt <= maxValidationRetries; validationAttempt++) {
@@ -311,17 +336,14 @@ Return ONLY valid JSON: { "questions": [...] }`;
 
         const times = getExamTimes(questionCount);
         const examData = { title: 'TOEIC Session', questions: finalQuestions, listeningTime: times.listeningTime, readingTime: times.readingTime };
-        const jsonPath = path.join(sessionDir, 'exam_data.json');
-        fs.writeFileSync(jsonPath, JSON.stringify(examData, null, 2));
+        fs.writeFileSync(skeletonPath, JSON.stringify(examData, null, 2));
 
         setStatus(session_id, { phase: 'audio', progress: 95, message: 'Generating audio files...' });
-        await generateAudio(jsonPath, audioDir);
+        await generateAudio(skeletonPath, audioDir);
 
         sessionStatus.set(session_id, { phase: 'completed', progress: 100, message: 'Done!' });
         sendSSE(session_id, { type: 'complete', session_id, data: examData });
         console.log(`[Done] Session ${session_id}: ${finalQuestions.length} questions`);
-
-        res.json({ session_id });
         return;
       } catch (err) {
         const isRetryable = err instanceof RetryableDistributionError ||
@@ -331,6 +353,7 @@ Return ONLY valid JSON: { "questions": [...] }`;
           fs.rmSync(sessionDir, { recursive: true, force: true });
           fs.mkdirSync(sessionDir, { recursive: true });
           fs.mkdirSync(audioDir, { recursive: true });
+          fs.writeFileSync(skeletonPath, JSON.stringify({ title: 'TOEIC Session', questions: [], status: 'generating' }, null, 2));
           sessionStatus.set(session_id, { phase: 'generating', progress: 0, message: `Retry ${validationAttempt}/${maxValidationRetries}: regenerating questions...` });
           sendSSE(session_id, { type: 'progress', phase: 'retrying', progress: 0, message: `Retrying (${validationAttempt}/${maxValidationRetries}): regenerating questions...` });
           const delayMs = validationAttempt * 2000;
@@ -342,12 +365,16 @@ Return ONLY valid JSON: { "questions": [...] }`;
         console.error('[Fatal]', msg);
         sessionStatus.set(session_id, { phase: 'error', progress: 0, message: msg });
         sendSSE(session_id, { type: 'error', message: msg });
-        fs.rmSync(sessionDir, { recursive: true, force: true });
-        res.status(500).json({ error: msg });
+        try {
+          const errorData = JSON.parse(fs.readFileSync(skeletonPath, 'utf-8'));
+          errorData.status = 'failed';
+          errorData.error = msg;
+          fs.writeFileSync(skeletonPath, JSON.stringify(errorData, null, 2));
+        } catch { /* best effort */ }
         return;
       }
     }
-  });
+  }
 
   return router;
 }
