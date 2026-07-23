@@ -557,12 +557,60 @@ export function ensureRandomModeBusiness(
 // carry AI-generated content that doesn't match the canonical mock datasets.
 // This normalizer unconditionally replaces the relevant fields so that every
 // listening question is guaranteed coherent with its source image/transcript.
+
+function shuffleArray<T>(arr: readonly T[]): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// Assign mock entries to groups ensuring no two adjacent groups share
+// the same entry. Each group of 3 questions gets one mock entry.
+function assignNonAdjacentGroups<T>(pool: readonly T[], numGroups: number): T[] {
+  if (numGroups <= 0 || pool.length === 0) return [];
+  if (pool.length === 1) return Array(numGroups).fill(pool[0]);
+
+  const shuffled = shuffleArray(pool);
+  const result: T[] = [];
+  let lastUsed: T | undefined;
+
+  for (let g = 0; g < numGroups; g++) {
+    let idx = g % shuffled.length;
+    let chosen = shuffled[idx];
+    // Ensure no two adjacent groups get the same mock entry
+    if (lastUsed !== undefined && chosen === lastUsed) {
+      idx = (idx + 1) % shuffled.length;
+      chosen = shuffled[idx];
+    }
+    result.push(chosen);
+    lastUsed = chosen;
+  }
+  return result;
+}
+
 export function ensureListeningCoherence(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
   if (!questions || questions.length === 0) return questions;
+
+  // Count P3 and P4 questions to build group assignments
+  let p3Count = 0;
+  let p4Count = 0;
+  for (const q of questions) {
+    if (q['type'] === 'listening' && q['part'] === 3) p3Count++;
+    if (q['type'] === 'listening' && q['part'] === 4) p4Count++;
+  }
+
+  // Pre-compute group assignments: each group of 3 questions gets a
+  // different mock entry, and no two adjacent groups share the same entry.
+  const numP3Groups = Math.ceil(p3Count / 3);
+  const p3GroupMocks = assignNonAdjacentGroups(MOCK_PART3_CONVERSATIONS, numP3Groups);
+  const numP4Groups = Math.ceil(p4Count / 3);
+  const p4GroupMocks = assignNonAdjacentGroups(MOCK_PART4_TALKS, numP4Groups);
+
   let p3GroupIdx = 0;
-  let p3RandomConv = MOCK_PART3_CONVERSATIONS[Math.floor(Math.random() * MOCK_PART3_CONVERSATIONS.length)];
   let p4GroupIdx = 0;
-  let p4RandomTalk = MOCK_PART4_TALKS[Math.floor(Math.random() * MOCK_PART4_TALKS.length)];
 
   return questions.map(q => {
     const part = q['part'] as number;
@@ -582,11 +630,11 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
     }
 
     if (type === 'listening' && part === 3) {
-      if (p3GroupIdx % 3 === 0) {
-        p3RandomConv = MOCK_PART3_CONVERSATIONS[Math.floor(Math.random() * MOCK_PART3_CONVERSATIONS.length)];
-      }
-      const mockQ = p3RandomConv.questions[p3GroupIdx % 3];
-      q['transcript'] = p3RandomConv.transcript;
+      const groupIdx = Math.floor(p3GroupIdx / 3);
+      const mockConv = p3GroupMocks[groupIdx];
+      const qInGroup = p3GroupIdx % 3;
+      const mockQ = mockConv.questions[qInGroup];
+      q['transcript'] = mockConv.transcript;
       q['options'] = [...mockQ.options];
       if (q['question'] !== mockQ.question) {
         q['question'] = mockQ.question;
@@ -595,11 +643,11 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
     }
 
     if (type === 'listening' && part === 4) {
-      if (p4GroupIdx % 3 === 0) {
-        p4RandomTalk = MOCK_PART4_TALKS[Math.floor(Math.random() * MOCK_PART4_TALKS.length)];
-      }
-      const mockQ = p4RandomTalk.questions[p4GroupIdx % 3];
-      q['transcript'] = p4RandomTalk.transcript;
+      const groupIdx = Math.floor(p4GroupIdx / 3);
+      const mockTalk = p4GroupMocks[groupIdx];
+      const qInGroup = p4GroupIdx % 3;
+      const mockQ = mockTalk.questions[qInGroup];
+      q['transcript'] = mockTalk.transcript;
       q['options'] = [...mockQ.options];
       if (q['question'] !== mockQ.question) {
         q['question'] = mockQ.question;
