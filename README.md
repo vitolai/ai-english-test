@@ -8,7 +8,6 @@ An AI-powered English proficiency practice exam application. Generate custom pra
 - Multiple content sources: random shuffle, web-sourced content, and PDF import
 - Configurable question counts (10–200)
 - Vision-capable models for photo description questions
-- Mock mode for testing without an API key
 - Session history and review
 
 ## Quick Start
