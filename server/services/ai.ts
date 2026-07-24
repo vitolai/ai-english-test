@@ -480,6 +480,15 @@ function stripHtml(raw: string): string {
     .trim();
 }
 
+function isMalformedP7(q: Record<string, unknown>): boolean {
+  if (q['part'] !== 7 || q['type'] !== 'reading') return false;
+  const questionText = (q['question'] as string) || '';
+  if (questionText.trim().length === 0) return true;
+  const opts = (q['options'] as string[]) || [];
+  if (opts.length < 4) return true;
+  return false;
+}
+
 // P7 passage templates keyed by rough topic extracted from the question.
 // Each template is 150–300 words and contains the key facts referenced in
 // typical TOEIC Part 7 questions so the examinee always has something to read.
@@ -511,6 +520,51 @@ const P7_PASSAGE_TEMPLATES: Array<{ keywords: string[]; passage: string }> = [
   {
     keywords: ['client', 'customer', 'service', 'support', 'complaint', 'feedback'],
     passage: 'CUSTOMER SERVICE BULLETIN\n\nThe Customer Service Department has implemented several improvements based on recent client feedback surveys. Response times for email inquiries have been reduced from 48 hours to 24 hours, and phone support hours have been extended to include Saturday mornings from 9 AM to 1 PM.\n\nA new ticketing system has been deployed to track all customer interactions and ensure that no request falls through the cracks. Each ticket is assigned a unique reference number that customers can use to check the status of their inquiry online.\n\nThe returns and exchange policy has been simplified. Customers now have 30 days from the date of purchase to return unopened items for a full refund. Items that have been opened may be exchanged for store credit within 15 days. All returns must include the original receipt and be in their original packaging.\n\nFrequently asked questions and self-service troubleshooting guides are available on our website at support.company.com. For urgent matters, customers can reach the support team directly at 1-800-555-HELP or via live chat during business hours.',
+  },
+];
+
+const MOCK_PART7_PASSAGES: Array<{ passage: string; question: string; options: string[]; answer: string }> = [
+  {
+    passage: P7_PASSAGE_TEMPLATES[0].passage,
+    question: 'Where should employees park starting next Monday?',
+    options: ['In the underground garage on Main Street', 'In the visitor lot on the south side', 'Near the old building', 'In the designated carpool spots'],
+    answer: 'A',
+  },
+  {
+    passage: P7_PASSAGE_TEMPLATES[1].passage,
+    question: 'What is the deadline for completing the compliance training?',
+    options: ['End of this quarter', 'End of this month', 'End of this week', 'End of the year'],
+    answer: 'A',
+  },
+  {
+    passage: P7_PASSAGE_TEMPLATES[2].passage,
+    question: 'When has the quarterly planning meeting been rescheduled to?',
+    options: ['Thursday at 2:00 PM', 'Wednesday at 2:00 PM', 'Thursday at 10:00 AM', 'Wednesday at 10:00 AM'],
+    answer: 'A',
+  },
+  {
+    passage: P7_PASSAGE_TEMPLATES[3].passage,
+    question: 'What is the salary range for the Marketing Coordinator position?',
+    options: ['$45,000 to $55,000 annually', '$35,000 to $45,000 annually', '$55,000 to $65,000 annually', '$40,000 to $50,000 annually'],
+    answer: 'A',
+  },
+  {
+    passage: P7_PASSAGE_TEMPLATES[4].passage,
+    question: 'How many days per week can eligible employees work remotely?',
+    options: ['Up to three days', 'Up to two days', 'Up to four days', 'Up to five days'],
+    answer: 'A',
+  },
+  {
+    passage: P7_PASSAGE_TEMPLATES[5].passage,
+    question: 'What improvement has beta testing shown for the SmartTrack Pro?',
+    options: ['35% improvement in workflow efficiency', '25% improvement in workflow efficiency', '45% improvement in workflow efficiency', '15% improvement in workflow efficiency'],
+    answer: 'A',
+  },
+  {
+    passage: P7_PASSAGE_TEMPLATES[6].passage,
+    question: 'How long do customers have to return unopened items for a full refund?',
+    options: ['30 days from the date of purchase', '15 days from the date of purchase', '60 days from the date of purchase', '45 days from the date of purchase'],
+    answer: 'A',
   },
 ];
 
@@ -584,9 +638,24 @@ function buildPassageFromQuestion(q: Record<string, unknown>): string {
 }
 
 export function ensurePart7Questions(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  let mockIdx = 0;
   return questions.map(q => {
     if (q['part'] === 7 && q['type'] === 'reading') {
-      if (q['question'] && typeof q['question'] === 'string') {
+      // Validate question field: if empty or missing, replace entire entry with mock
+      const questionText = (q['question'] as string) || '';
+      if (questionText.trim().length === 0) {
+        const mock = MOCK_PART7_PASSAGES[mockIdx % MOCK_PART7_PASSAGES.length];
+        mockIdx++;
+        const shuffled = shuffleOptionsWithAnswer([...mock.options], mock.answer);
+        return {
+          ...q,
+          passage: mock.passage,
+          question: mock.question,
+          options: shuffled.options,
+          answer: shuffled.answer,
+        };
+      }
+      if (typeof q['question'] === 'string') {
         q['question'] = stripHtml(q['question']);
       }
       if (q['passage'] && typeof q['passage'] === 'string') {
@@ -2988,6 +3057,17 @@ export function validateAndRebalanceDistribution(
         if (remainingTrim <= 0) break;
         const trim = Math.min(remainingTrim, candidate.overage);
         let trimmed = 0;
+        // First pass: prefer removing malformed entries (empty question / missing options)
+        adjusted = adjusted.filter(q => {
+          if (trimmed >= trim) return true;
+          if (q.type === typeKey && q.part === candidate.partNum && isMalformedP7(q)) {
+            trimmed++;
+            actualType[candidate.part as keyof typeof actualType]--;
+            return false;
+          }
+          return true;
+        });
+        // Second pass: remove any remaining excess from valid entries
         adjusted = adjusted.filter(q => {
           if (trimmed >= trim) return true;
           if (q.type === typeKey && q.part === candidate.partNum) {
