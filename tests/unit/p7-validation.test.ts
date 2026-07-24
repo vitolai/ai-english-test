@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ensurePart7Questions, validateAndRebalanceDistribution, generateMockData } from '../../server/services/ai.js';
+import { ensurePart7Questions, validateAndRebalanceDistribution, generateMockData, ensureListeningCoherence } from '../../server/services/ai.js';
 
 function makeP7(overrides: Partial<{ question: string; passage: string; options: string[]; answer: string }> = {}) {
   return {
@@ -71,6 +71,50 @@ describe('generateMockData — 100Q P7 entries have valid question fields', () =
       expect((q.question as string).trim().length).toBeGreaterThan(0);
       expect(q.options.length).toBe(4);
       expect(['A', 'B', 'C', 'D']).toContain(q.answer);
+    }
+  });
+});
+
+describe('ensureListeningCoherence — P2 image field leak (issue #37)', () => {
+  it('removes image field from P2 questions after processing', () => {
+    // Simulate a P2 question that leaked an image from P1
+    const questions = [
+      {
+        id: 1, part: 1, type: 'listening', image: '1556761175-b413da4baf72',
+        question: 'Look at the photograph...', options: ['A', 'B', 'C', 'D'], answer: 'A', transcript: '',
+      },
+      {
+        id: 2, part: 2, type: 'listening', image: '1556761175-b413da4baf72',
+        question: '', options: ['A', 'B', 'C'], answer: 'A', transcript: 'When is the deadline?',
+      },
+    ] as Array<Record<string, unknown>>;
+    const result = ensureListeningCoherence(questions);
+    const p2 = result.find(q => q['part'] === 2);
+    expect(p2).toBeDefined();
+    expect(p2!['image']).toBeUndefined();
+  });
+
+  it('10Q mock: no P2 question has an image field', () => {
+    const { questions } = generateMockData(10, 'test-p2-image');
+    const coherenceResult = ensureListeningCoherence(
+      questions as Array<Record<string, unknown>>
+    );
+    const p2Questions = coherenceResult.filter(q => q['part'] === 2 && q['type'] === 'listening');
+    expect(p2Questions.length).toBeGreaterThan(0);
+    for (const q of p2Questions) {
+      expect(q['image']).toBeUndefined();
+    }
+  });
+
+  it('100Q mock: no P2 question has an image field', () => {
+    const { questions } = generateMockData(100, 'test-p2-image-100');
+    const coherenceResult = ensureListeningCoherence(
+      questions as Array<Record<string, unknown>>
+    );
+    const p2Questions = coherenceResult.filter(q => q['part'] === 2 && q['type'] === 'listening');
+    expect(p2Questions.length).toBeGreaterThan(0);
+    for (const q of p2Questions) {
+      expect(q['image']).toBeUndefined();
     }
   });
 });

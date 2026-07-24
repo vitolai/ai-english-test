@@ -841,6 +841,11 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
       q['transcript'] = d.transcript;
       q['options'] = [...d.options];
       q['answer'] = d.answer;
+      // Part 2 is audio-only — must never carry an image field.
+      // Without this, a P1 image can leak when the AI relabels a P1 question
+      // as P2 or when ensureListeningCoherence processes a question that
+      // previously had an image assigned by ensurePart1Images.
+      delete q['image'];
     }
 
     if (type === 'listening' && part === 3) {
