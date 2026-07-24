@@ -172,6 +172,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
         apiUrl: finalApiUrl,
         apiKey,
       }));
+      // Persist API key per-provider for restoration on switch
+      localStorage.setItem(`toeic_api_key_${providerId}`, apiKey);
     } catch { /* ignore */ }
 
     const config: AIConfig = {
@@ -292,7 +294,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                       onClick={() => {
                         setProviderId(p.id);
                         setModelId(defaultModels[p.id] || '');
-                        setApiKey('');
                         setApiUrl(defaultUrls[p.id] || '');
                       }}
                       className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all text-center ${

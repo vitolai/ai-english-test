@@ -107,25 +107,32 @@ function trimP6PassageBlanks(q: Question, allQuestions: Question[]): string {
   const sharedCount = allQuestions.filter(
     q2 => q2.part === 6 && q2.type === 'reading' && (q2.context || q2.passage) === passage
   ).length;
-  // Count blanks: numbered (1), (2), (3) AND underscore ___ patterns
-  const numberedBlanks = passage.match(/\(\d+\)/g) || [];
-  const underscoreBlanks = passage.match(/_{3,}/g) || [];
-  const blankCount = numberedBlanks.length + underscoreBlanks.length;
-  if (blankCount === sharedCount || blankCount === 0 || sharedCount === 0) return passage;
+  if (sharedCount === 0) return passage;
+  // Count all blanks: numbered (1), (2), (3) AND underscore ___ patterns
+  const blankRegex = /(\(\d+\)|_{3,})/g;
+  const allBlanks: string[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = blankRegex.exec(passage)) !== null) {
+    allBlanks.push(m[0]);
+  }
+  if (allBlanks.length === sharedCount) return passage;
 
-  if (blankCount > sharedCount) {
-    // Remove excess numbered blanks from the end
+  if (allBlanks.length > sharedCount) {
+    // Remove excess blanks from the end of the passage
     let result = passage;
-    for (let i = numberedBlanks.length; i > sharedCount; i--) {
-      const blankPattern = new RegExp(`\\(${i}\\)[ _]*\\n?`, 'g');
-      result = result.replace(blankPattern, '');
+    for (let i = allBlanks.length - 1; i >= sharedCount; i--) {
+      const blank = allBlanks[i];
+      const idx = result.lastIndexOf(blank);
+      if (idx !== -1) {
+        result = result.slice(0, idx) + result.slice(idx + blank.length);
+      }
     }
-    return result;
+    return result.replace(/\n\s*$/, '').trimEnd();
   }
 
-  // blankCount < sharedCount: append missing blank markers
+  // allBlanks.length < sharedCount: append missing blank markers
   let result = passage.trimEnd();
-  for (let i = blankCount + 1; i <= sharedCount; i++) {
+  for (let i = allBlanks.length + 1; i <= sharedCount; i++) {
     result += ` (${i})`;
   }
   return result;
