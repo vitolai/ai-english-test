@@ -45,6 +45,7 @@ export interface ProviderConfig {
   defaultHeaders?: Record<string, string>;
   models: ModelInfo[];
   category: 'cloud' | 'aggregator' | 'local' | 'custom';
+  hidden?: boolean;
   requiresApiKey: boolean;
   userProvidesBaseUrl?: boolean;
   rateLimits?: { requestsPerMinute?: number; tokensPerMinute?: number };
@@ -237,7 +238,7 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
   mock: {
     id: 'mock', name: 'Mock',
     description: 'Deterministic mock generator for testing. Triggered when API key contains "test". Zero external calls, zero cost, deterministic output.',
-    baseUrl: 'mock://local', authType: 'none', category: 'aggregator', requiresApiKey: false,
+    baseUrl: 'mock://local', authType: 'none', category: 'aggregator', hidden: true, requiresApiKey: false,
     models: [
       { id: 'mock-toeic-generator', name: 'Mock TOEIC Generator', contextWindow: 4096, maxOutputTokens: 4096, capabilities: { text: true, streaming: true, vision: false, audioInput: false, audioOutput: false, functionCalling: false, jsonMode: true, reasoning: false, codeExecution: false, localExecution: false, offline: true, apiKeyRequired: false }, pricing: { inputPer1M: 0, outputPer1M: 0 }, supportsJsonMode: true, supportsFunctionCalling: false, supportsVision: false, supportsAudioInput: false, supportsAudioOutput: false, supportsReasoning: false, supportsCodeExecution: false },
     ],

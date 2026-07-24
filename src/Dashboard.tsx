@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Settings, Play, Globe, FileText, Shuffle, X, Eye, EyeOff, Cloud, Server, Globe as GlobeIcon, Zap, Shield, Sparkles, Key, ExternalLink } from 'lucide-react';
 import { PROVIDERS, type ProviderConfig, type ModelInfo } from './lib/providers.ts';
 
@@ -66,8 +66,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
   const [apiKey, setApiKey] = useState(savedConfig?.apiKey || '');
   const [showApiKey, setShowApiKey] = useState(false);
 
-  // Computed values from providers.ts
-  const providers = useMemo(() => Object.values(PROVIDERS) as ProviderConfig[], []);
+  // Computed values from providers.ts — filter out hidden providers
+  const providers = useMemo(() => (Object.values(PROVIDERS) as ProviderConfig[]).filter(p => !p.hidden), []);
   const currentProvider = providers.find(p => p.id === providerId);
   const availableModels = useMemo(() => currentProvider?.models || [], [currentProvider]);
 
@@ -187,11 +187,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
     onStart(count, source, source === 'web' ? webUrl : pdfFile, config, 50);
   };
 
-  // Initialize defaults when provider changes
+  // Initialize defaults when provider changes — restore per-provider API key from localStorage
+  const isFirstRender = useRef(true);
   useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
     if (currentProvider) {
       setModelId(defaultModels[providerId] || currentProvider.models[0]?.id || '');
       setApiUrl(defaultUrls[providerId] || '');
+      // Restore per-provider API key
+      try {
+        const saved = localStorage.getItem(`toeic_api_key_${providerId}`) || '';
+        setApiKey(saved);
+      } catch { setApiKey(''); }
     }
   }, [providerId, currentProvider]);
 
@@ -353,16 +360,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
                 </div>
               )}
 
-              {/* Mock Mode Info */}
-              {providerId === 'mock' && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
-                  <p className="text-green-800 font-medium flex items-center gap-2">
-                    <Shield className="w-5 h-5" />
-                    Mock Mode: No API key needed. Uses deterministic mock data for testing.
-                  </p>
-                </div>
-              )}
-
               {/* Ollama Cloud Notice */}
               {providerId === 'ollama' && (
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
@@ -382,7 +379,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
         </div>
       )}
       </div>
-      <footer className="py-6 text-center text-xs text-slate-400 w-full">
+      <footer className="py-4 text-center text-xs text-slate-400 w-full border-t border-slate-200 mt-auto">
         Not affiliated with ETS. TOEIC is a trademark of Educational Testing Service.
       </footer>
     </div>

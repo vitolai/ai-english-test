@@ -99,6 +99,7 @@ function unsplashUrl(rawId: string | undefined): string | null {
 // Trim P6 passage blanks so the number of blanks matches the number of
 // questions that share this same passage.  If a passage has 3 blanks but
 // only 2 questions reference it, the third blank line is removed.
+// If 2 blanks but 3 questions, extra blanks are appended.
 function trimP6PassageBlanks(q: Question, allQuestions: Question[]): string {
   if (q.part !== 6 || q.type !== 'reading') return q.context || q.passage || '';
   const passage = q.context || q.passage || '';
@@ -106,15 +107,26 @@ function trimP6PassageBlanks(q: Question, allQuestions: Question[]): string {
   const sharedCount = allQuestions.filter(
     q2 => q2.part === 6 && q2.type === 'reading' && (q2.context || q2.passage) === passage
   ).length;
-  // Count blanks in passage: patterns like (1), (2), (3) or ___
-  const blankMatches = passage.match(/\(\d+\)/g) || [];
-  const blankCount = blankMatches.length;
-  if (blankCount <= sharedCount || blankCount === 0) return passage;
-  // Remove excess blank lines from the passage
-  let result = passage;
-  for (let i = blankCount; i > sharedCount; i--) {
-    const blankPattern = new RegExp(`\\(${i}\\)[ _]*\\n?`, 'g');
-    result = result.replace(blankPattern, '');
+  // Count blanks: numbered (1), (2), (3) AND underscore ___ patterns
+  const numberedBlanks = passage.match(/\(\d+\)/g) || [];
+  const underscoreBlanks = passage.match(/_{3,}/g) || [];
+  const blankCount = numberedBlanks.length + underscoreBlanks.length;
+  if (blankCount === sharedCount || blankCount === 0 || sharedCount === 0) return passage;
+
+  if (blankCount > sharedCount) {
+    // Remove excess numbered blanks from the end
+    let result = passage;
+    for (let i = numberedBlanks.length; i > sharedCount; i--) {
+      const blankPattern = new RegExp(`\\(${i}\\)[ _]*\\n?`, 'g');
+      result = result.replace(blankPattern, '');
+    }
+    return result;
+  }
+
+  // blankCount < sharedCount: append missing blank markers
+  let result = passage.trimEnd();
+  for (let i = blankCount + 1; i <= sharedCount; i++) {
+    result += ` (${i})`;
   }
   return result;
 }
