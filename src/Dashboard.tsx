@@ -52,12 +52,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Provider & Model State
-  const [providerId, setProviderId] = useState<string>('openrouter');
-  const [modelId, setModelId] = useState<string>('nvidia/nemotron-3-super-120b-a12b:free');
+  // Provider & Model State — load from localStorage on first render
+  const savedConfig = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('toeic_ai_config');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }, []);
+  const [providerId, setProviderId] = useState<string>(savedConfig?.providerId || 'openrouter');
+  const [modelId, setModelId] = useState<string>(savedConfig?.modelId || 'nvidia/nemotron-3-super-120b-a12b:free');
   const [customModel, setCustomModel] = useState('');
-  const [apiUrl, setApiUrl] = useState('');
-  const [apiKey, setApiKey] = useState('');
+  const [apiUrl, setApiUrl] = useState(savedConfig?.apiUrl || '');
+  const [apiKey, setApiKey] = useState(savedConfig?.apiKey || '');
   const [showApiKey, setShowApiKey] = useState(false);
 
   // Computed values from providers.ts
@@ -155,10 +161,23 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
       return;
     }
 
+    const finalApiUrl = apiUrl || defaultUrls[providerId] || '';
+    const finalModel = modelId === 'custom' ? customModel : modelId;
+
+    // Persist to localStorage so next visit auto-fills
+    try {
+      localStorage.setItem('toeic_ai_config', JSON.stringify({
+        providerId,
+        modelId,
+        apiUrl: finalApiUrl,
+        apiKey,
+      }));
+    } catch { /* ignore */ }
+
     const config: AIConfig = {
       aiSource: 'ai-cloud',
-      aiModel: modelId === 'custom' ? customModel : modelId,
-      apiUrl: apiUrl || defaultUrls[providerId] || '',
+      aiModel: finalModel,
+      apiUrl: finalApiUrl,
       apiKey: apiKey,
       provider: providerId,
       maxStorage: 50,
@@ -180,7 +199,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
   const countOptions = [10, 20, 50, 100, 200];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      <div className="flex-1 flex items-center justify-center p-6">
       <div className="max-w-2xl w-full bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
         <div className="bg-blue-600 h-2 w-full"></div>
         <div className="p-10">
@@ -361,7 +381,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
           </div>
         </div>
       )}
-      <footer className="mt-6 text-center text-xs text-slate-400">
+      </div>
+      <footer className="py-6 text-center text-xs text-slate-400 w-full">
         Not affiliated with ETS. TOEIC is a trademark of Educational Testing Service.
       </footer>
     </div>

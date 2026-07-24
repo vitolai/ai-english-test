@@ -96,6 +96,29 @@ function unsplashUrl(rawId: string | undefined): string | null {
   return `https://images.unsplash.com/photo-${id}?w=800&h=600&fit=crop&crop=entropy&auto=format`;
 }
 
+// Trim P6 passage blanks so the number of blanks matches the number of
+// questions that share this same passage.  If a passage has 3 blanks but
+// only 2 questions reference it, the third blank line is removed.
+function trimP6PassageBlanks(q: Question, allQuestions: Question[]): string {
+  if (q.part !== 6 || q.type !== 'reading') return q.context || q.passage || '';
+  const passage = q.context || q.passage || '';
+  // Count how many P6 questions share this exact passage text
+  const sharedCount = allQuestions.filter(
+    q2 => q2.part === 6 && q2.type === 'reading' && (q2.context || q2.passage) === passage
+  ).length;
+  // Count blanks in passage: patterns like (1), (2), (3) or ___
+  const blankMatches = passage.match(/\(\d+\)/g) || [];
+  const blankCount = blankMatches.length;
+  if (blankCount <= sharedCount || blankCount === 0) return passage;
+  // Remove excess blank lines from the passage
+  let result = passage;
+  for (let i = blankCount; i > sharedCount; i--) {
+    const blankPattern = new RegExp(`\\(${i}\\)[ _]*\\n?`, 'g');
+    result = result.replace(blankPattern, '');
+  }
+  return result;
+}
+
 const QuestionCard: React.FC<{
   q: Question;
   index: number;
@@ -262,7 +285,7 @@ const QuestionCard: React.FC<{
       {!isPart1 && (q.context || q.passage) && (
         <div className="mb-10 p-8 bg-slate-50/50 rounded-3xl border border-slate-100 text-slate-700 text-lg leading-relaxed shadow-inner relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/20" />
-          <p className="whitespace-pre-line">{q.context || q.passage}</p>
+          <p className="whitespace-pre-line">{trimP6PassageBlanks(q, allQuestions)}</p>
         </div>
       )}
 
