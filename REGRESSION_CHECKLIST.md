@@ -9,12 +9,12 @@
 
 | ID | Feature | Test Steps | Expected | Status |
 |----|---------|------------|----------|--------|
-| **CP-01** | **Frontend Loads** | Open `http://100.88.15.95:5173` | Page renders, no console errors | ⬜ |
-| **CP-02** | **Backend Health** | `curl http://100.88.15.95:3001/api/health/providers` | 200 OK, providers listed | ⬜ |
+| **CP-01** | **Frontend Loads** | Open `http://localhost:5173` | Page renders, no console errors | ⬜ |
+| **CP-02** | **Backend Health** | `curl http://localhost:3001/api/health/providers` | 200 OK, providers listed | ⬜ |
 | **CP-03** | **Mock 10Q Generation** | POST `/api/generate` with `model:mock, apiKey:test` | 10 questions, all parts present | ⬜ |
 | **CP-04** | **Real AI 10Q Generation** | POST `/api/generate` with real API key | 10 questions, Parts 1-7 distributed | ⬜ |
 | **CP-05** | **Audio Files Exist** | Check `storage/sessions/*/audio/q1.mp3` after gen | 5+ audio files, 20KB+ each | ⬜ |
-| **CP-06** | **Audio Playable via Proxy** | `curl http://100.88.15.95:5173/storage/sessions/.../q1.mp3` | 200 OK, >10KB | ⬜ |
+| **CP-06** | **Audio Playable via Proxy** | `curl http://localhost:5173/storage/sessions/.../q1.mp3` | 200 OK, >10KB | ⬜ |
 
 ---
 

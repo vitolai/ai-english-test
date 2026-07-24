@@ -9,3 +9,4 @@ __pycache__/
 nohup.out
 test-results/
 *.bak
+tests/e2e_webwright/final_runs/
