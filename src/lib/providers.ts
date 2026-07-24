@@ -85,7 +85,7 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
     id: 'openrouter', name: 'OpenRouter',
     description: 'Aggregator for 200+ models via single API key. Includes Nemotron free tier, Gemini, Claude, Llama, etc.',
     baseUrl: 'https://openrouter.ai/api/v1', authType: 'bearer', authHeader: 'Authorization',
-    defaultHeaders: { 'Content-Type': 'application/json', 'HTTP-Referer': 'https://toeic-ai-pro.local', 'X-Title': 'TOEIC AI Pro' },
+    defaultHeaders: { 'Content-Type': 'application/json', 'HTTP-Referer': 'https://toeic-ai-pro.local', 'X-Title': 'AI Exam Generator' },
     category: 'aggregator', requiresApiKey: true,
     models: [
       { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'Nemotron 3 Ultra (Free)', contextWindow: 128000, maxOutputTokens: 8192, capabilities: { text: true, streaming: true, vision: true, audioInput: true, audioOutput: true, functionCalling: true, jsonMode: true, reasoning: true, codeExecution: true, localExecution: false, offline: false, apiKeyRequired: true }, pricing: { inputPer1M: 0, outputPer1M: 0 }, supportsJsonMode: true, supportsFunctionCalling: true, supportsVision: true, supportsAudioInput: true, supportsAudioOutput: true, supportsReasoning: true, supportsCodeExecution: true },

@@ -35,7 +35,7 @@ interface Status {
 const App: React.FC = () => {
     const [examData, setExamData] = useState<ExamData | null>(null);
     const [loading, setLoading] = useState(false);
-    const [status, setStatus] = useState<Status>({ phase: 'starting', progress: 0, message: 'Initializing TOEIC AI Engine...' });
+    const [status, setStatus] = useState<Status>({ phase: 'starting', progress: 0, message: 'Initializing AI Exam Engine...' });
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [view, setView] = useState<'dashboard' | 'exam'>('dashboard');
@@ -177,7 +177,7 @@ const App: React.FC = () => {
                 <div className="fixed inset-0 z-50 bg-blue-900/60 backdrop-blur-xl flex flex-col items-center justify-center text-white p-6 transition-all duration-500">
                     <div className="relative mb-12">
                         <div className="w-24 h-24 border-4 border-white/10 border-t-white rounded-full animate-spin"></div>
-                        <div className="absolute inset-0 flex items-center justify-center font-black text-xs text-white/40 uppercase">TOEIC</div>
+                        <div className="absolute inset-0 flex items-center justify-center font-black text-xs text-white/40 uppercase">AI Exam</div>
                     </div>
                     <h2 className="text-5xl font-black mb-4 tracking-tighter uppercase">{status.phase === 'generating' ? 'Visual Analysis' : 'Exam Generation'}</h2>
                     <p className="text-blue-200 font-bold text-xl mb-12 h-8 text-center">{status.message}</p>

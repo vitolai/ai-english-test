@@ -186,7 +186,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
         <div className="p-10">
           <div className="flex justify-between items-center mb-10">
             <div>
-              <h1 className="text-3xl font-extrabold text-slate-800">TOEIC Practice Exam</h1>
+              <h1 className="text-3xl font-extrabold text-slate-800">English Proficiency Practice Exam</h1>
               <p className="text-slate-500 mt-2 text-lg">Configure your exam settings and start practicing</p>
             </div>
             <button onClick={() => setIsSettingsOpen(true)} className="p-3 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
@@ -361,6 +361,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
           </div>
         </div>
       )}
+      <footer className="mt-6 text-center text-xs text-slate-400">
+        Not affiliated with ETS. TOEIC is a trademark of Educational Testing Service.
+      </footer>
     </div>
   );
 };
