@@ -619,6 +619,7 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
     if (type === 'listening' && part === 1) {
       const d = PART1_DATA[Math.floor(Math.random() * PART1_DATA.length)];
       q['image'] = d.image;
+      q['question'] = 'Look at the photograph and listen to the four statements. Choose the statement that best describes what you see in the picture.';
       q['options'] = [...d.options];
       q['answer'] = d.answer;
     }
@@ -627,6 +628,7 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
       const d = PART2_DATA[Math.floor(Math.random() * PART2_DATA.length)];
       q['transcript'] = d.transcript;
       q['options'] = [...d.options];
+      q['answer'] = d.answer;
     }
 
     if (type === 'listening' && part === 3) {
@@ -635,10 +637,9 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
       const qInGroup = p3GroupIdx % 3;
       const mockQ = mockConv.questions[qInGroup];
       q['transcript'] = mockConv.transcript;
+      q['question'] = mockQ.question;
       q['options'] = [...mockQ.options];
-      if (q['question'] !== mockQ.question) {
-        q['question'] = mockQ.question;
-      }
+      q['answer'] = mockQ.answer;
       p3GroupIdx++;
     }
 
@@ -648,10 +649,9 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
       const qInGroup = p4GroupIdx % 3;
       const mockQ = mockTalk.questions[qInGroup];
       q['transcript'] = mockTalk.transcript;
+      q['question'] = mockQ.question;
       q['options'] = [...mockQ.options];
-      if (q['question'] !== mockQ.question) {
-        q['question'] = mockQ.question;
-      }
+      q['answer'] = mockQ.answer;
       p4GroupIdx++;
     }
 
@@ -2366,6 +2366,13 @@ const PART1_DATA: { image: string; options: string[]; answer: 'A' | 'B' | 'C' | 
   },
 ];
 
+// FR-GEN-13: Shuffle PART1_DATA options at init so answers aren't always the same position
+for (const d of PART1_DATA) {
+  const correctOption = d.options['ABCD'.indexOf(d.answer)];
+  d.options = shuffleArray(d.options);
+  d.answer = 'ABCD'[d.options.indexOf(correctOption)] as 'A' | 'B' | 'C' | 'D';
+}
+
 const KNOWN_P1_IDS = new Set(PART1_DATA.map(d => d.image));
 
 // --- Part 2: Question-Response (spoken question in transcript, empty question, 3 options) ---
@@ -2379,6 +2386,13 @@ const PART2_DATA: { transcript: string; options: string[]; answer: string }[] = 
   { transcript: "Why was the product launch delayed?", options: ["We had supply chain issues.", "Yes, she's in her office.", "I agree completely."], answer: "A" },
   { transcript: "What time does the conference call start?", options: ["At 10 AM sharp.", "It's on the second floor.", "No, I haven't seen it."], answer: "A" },
 ];
+
+// FR-GEN-13: Shuffle PART2_DATA options at init so answers aren't always the same position
+for (const d of PART2_DATA) {
+  const correctOption = d.options['ABCD'.indexOf(d.answer)];
+  d.options = shuffleArray(d.options);
+  d.answer = 'ABCD'[d.options.indexOf(correctOption)];
+}
 
 // --- Part 3: Conversations (3 questions per conversation, sharing same transcript) ---
 const MOCK_PART3_CONVERSATIONS: { transcript: string; questions: { question: string; options: string[]; answer: string }[] }[] = [
@@ -2448,6 +2462,15 @@ const MOCK_PART3_CONVERSATIONS: { transcript: string; questions: { question: str
   },
 ];
 
+// FR-GEN-13: Shuffle MOCK_PART3_CONVERSATIONS options at init so answers aren't always the same position
+for (const conv of MOCK_PART3_CONVERSATIONS) {
+  for (const q of conv.questions) {
+    const correctOption = q.options['ABCD'.indexOf(q.answer)];
+    q.options = shuffleArray(q.options);
+    q.answer = 'ABCD'[q.options.indexOf(correctOption)];
+  }
+}
+
 // --- Part 4: Talks (3 questions per talk, sharing same transcript) ---
 const MOCK_PART4_TALKS: { transcript: string; questions: { question: string; options: string[]; answer: string }[] }[] = [
   {
@@ -2515,6 +2538,15 @@ const MOCK_PART4_TALKS: { transcript: string; questions: { question: string; opt
     ],
   },
 ];
+
+// FR-GEN-13: Shuffle MOCK_PART4_TALKS options at init so answers aren't always the same position
+for (const talk of MOCK_PART4_TALKS) {
+  for (const q of talk.questions) {
+    const correctOption = q.options['ABCD'.indexOf(q.answer)];
+    q.options = shuffleArray(q.options);
+    q.answer = 'ABCD'[q.options.indexOf(correctOption)];
+  }
+}
 
 // --- Part 5/6/7: Reading questions ---
 const PART5_QUESTIONS: { question: string; options: string[]; answer: string }[] = [
