@@ -188,7 +188,56 @@ async def main():
 
     sem = asyncio.Semaphore(5)
     tasks = []
-    for q in data.get("questions", []):
+
+    all_questions = data.get("questions", [])
+    non_p34 = [q for q in all_questions if q.get("part") not in (3, 4)]
+    p34 = [q for q in all_questions if q.get("part") in (3, 4) and q.get("audio")]
+
+    # Group P3/P4 questions by transcript (consecutive questions with
+    # the same transcript belong to the same conversation/talk group).
+    groups = []
+    for q in p34:
+        t = q.get("transcript", "")
+        if groups and groups[-1][0].get("transcript", "") == t:
+            groups[-1].append(q)
+        else:
+            groups.append([q])
+
+    json_updated = False
+
+    # --- P3/P4: generate one audio file per group ---
+    for group in groups:
+        first_q = group[0]
+        first_id = first_q["id"]
+        part = first_q["part"]
+        group_filename = "q{}_part{}.mp3".format(first_id, part)
+        output_path = os.path.join(audio_dir, group_filename)
+
+        # Build the relative audio path for JSON (strip directory prefix).
+        raw_audio = first_q["audio"]
+        group_audio_field = raw_audio.rsplit("/", 1)[0] + "/" + group_filename
+
+        # Build combined segments: conversation + each question.
+        segments = []
+        transcript = first_q.get("transcript", "")
+        if transcript:
+            parsed = parse_speaker_turns(transcript)
+            segments.extend((dialogue, voice) for (_sp, dialogue, voice) in parsed)
+        for gq in group:
+            question = gq.get("question", "")
+            if question:
+                segments.append(("Question: {}".format(question), FEMALE_VOICE))
+
+        if segments:
+            tasks.append(gen_multi_voice_audio(output_path, segments, sem))
+
+        # Point every question in the group at the shared group file.
+        for gq in group:
+            gq["audio"] = group_audio_field
+            json_updated = True
+
+    # --- Non-P3/P4: generate per-question audio as before ---
+    for q in non_p34:
         if q.get("type") != "listening" or not q.get("audio"):
             continue
 
@@ -197,17 +246,15 @@ async def main():
         text = ""
 
         if q.get("part") == 1:
-            # Part 1: combine all 4 options with A/B/C/D labels (like Part 2)
             options = q.get("options", [])
             if options:
                 parts = []
                 for i, opt in enumerate(options):
-                    label = chr(65 + i)  # A, B, C, D
+                    label = chr(65 + i)
                     opt = _strip_option_label(opt)
                     parts.append("{}. {}".format(label, opt))
                 text = ". ".join(parts)
         elif q.get("part") == 2:
-            # Part 2: spoken question + 3 responses with A/B/C labels
             question = q.get("transcript", "") or q.get("question", "")
             options = q.get("options", [])
             if question and options:
@@ -221,22 +268,6 @@ async def main():
                 text = question
             else:
                 text = "Could you please tell me about the current status?"
-        elif q.get("part") in (3, 4):
-            # Part 3/4: multi-voice audio
-            # Only speak transcript + question. Options are read silently by examinee.
-            transcript = q.get("transcript", "")
-            question = q.get("question", "")
-            segments = []
-            if transcript:
-                parsed = parse_speaker_turns(transcript)
-                # gen_multi_voice_audio expects (text, voice) tuples
-                segments.extend((dialogue, voice) for (_sp, dialogue, voice) in parsed)
-            if question:
-                segments.append(("Question: {}".format(question), FEMALE_VOICE))
-            # Options are NOT spoken for Part 3/4 (examinee reads them)
-            if segments:
-                tasks.append(gen_multi_voice_audio(output_path, segments, sem))
-            continue
         else:
             text = q.get("transcript") or q.get("question") or ""
 
@@ -248,6 +279,11 @@ async def main():
         print("Generated {} audio files.".format(len(tasks)))
     else:
         print("No audio needed.")
+
+    # Write updated JSON so frontend reads correct group audio paths.
+    if json_updated:
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
 if __name__ == "__main__":
     asyncio.run(main())

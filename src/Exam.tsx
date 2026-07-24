@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle2, Trophy, ArrowLeft, Headphones, BookOpen, CheckSquare, Volume2, Printer } from 'lucide-react';
 
 interface Question {
@@ -103,7 +103,8 @@ const QuestionCard: React.FC<{
   onAnswer: (qid: number, val: string) => void;
   playingAudioId: number | null;
   setPlayingAudioId: (id: number | null) => void;
-}> = ({ q, index, answer, onAnswer, playingAudioId, setPlayingAudioId }) => {
+  allQuestions: Question[];
+}> = ({ q, index, answer, onAnswer, playingAudioId, setPlayingAudioId, allQuestions }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const isPart1 = q.type === 'listening' && q.part === 1;
   const isPart2 = q.type === 'listening' && q.part === 2;
@@ -114,6 +115,16 @@ const QuestionCard: React.FC<{
       audioRef.current.pause();
     }
   }, [playingAudioId, q.id]);
+
+  // For P3/P4 group audio: detect if any question sharing the same audio
+  // file is currently playing, so all questions in the group show "Playing...".
+  const isGroupPlaying = useMemo(() => {
+    if (playingAudioId === null || !q.audio) return false;
+    const playingQ = allQuestions.find(qq => qq.id === playingAudioId);
+    return Boolean(playingQ && playingQ.audio === q.audio && playingQ.id !== q.id);
+  }, [playingAudioId, q.id, q.audio, allQuestions]);
+
+  const isActive = playingAudioId === q.id || isGroupPlaying;
 
   const handlePlay = () => {
     if (audioRef.current) {
@@ -167,14 +178,14 @@ const QuestionCard: React.FC<{
               <div 
                 onClick={handlePlay}
                 className={`p-4 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-90 flex-shrink-0 ${
-                  playingAudioId === q.id ? 'bg-blue-600 text-white animate-pulse' : 'bg-white text-blue-600'
+                  isActive ? 'bg-blue-600 text-white animate-pulse' : 'bg-white text-blue-600'
                 }`}
               >
-                <Volume2 className={`w-8 h-8 ${playingAudioId === q.id ? 'text-blue-200' : ''}`} />
+                <Volume2 className={`w-8 h-8 ${isActive ? 'text-blue-200' : ''}`} />
               </div>
               <div className="flex-1 text-center">
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  {playingAudioId === q.id ? 'Playing...' : 'Tap to Play Audio'}
+                  {isActive ? 'Playing...' : 'Tap to Play Audio'}
                 </p>
                 <p className="text-xs text-slate-500">A, B, C, D will be spoken in sequence</p>
               </div>
@@ -197,14 +208,14 @@ const QuestionCard: React.FC<{
           <div 
             onClick={handlePlay}
             className={`p-4 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-90 flex-shrink-0 ${
-              playingAudioId === q.id ? 'bg-blue-600 text-white animate-pulse' : 'bg-white text-blue-600'
+              isActive ? 'bg-blue-600 text-white animate-pulse' : 'bg-white text-blue-600'
             }`}
           >
-            <Volume2 className={`w-8 h-8 ${playingAudioId === q.id ? 'text-blue-200' : ''}`} />
+            <Volume2 className={`w-8 h-8 ${isActive ? 'text-blue-200' : ''}`} />
           </div>
           <div className="flex-1 text-center">
             <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">
-              {playingAudioId === q.id ? 'Playing...' : 'Tap to Play Question & Responses'}
+              {isActive ? 'Playing...' : 'Tap to Play Question & Responses'}
             </p>
             <p className="text-xs text-slate-500">A, B, C responses will be spoken</p>
           </div>
@@ -225,14 +236,14 @@ const QuestionCard: React.FC<{
           <div 
             onClick={handlePlay}
             className={`p-4 rounded-2xl transition-all shadow-sm cursor-pointer hover:scale-105 active:scale-90 flex-shrink-0 ${
-              playingAudioId === q.id ? 'bg-blue-600 text-white animate-pulse' : 'bg-white text-blue-600'
+              isActive ? 'bg-blue-600 text-white animate-pulse' : 'bg-white text-blue-600'
             }`}
           >
-            <Volume2 className={`w-8 h-8 ${playingAudioId === q.id ? 'text-blue-200' : ''}`} />
+            <Volume2 className={`w-8 h-8 ${isActive ? 'text-blue-200' : ''}`} />
           </div>
           <div className="flex-1 text-center">
             <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">
-              {playingAudioId === q.id ? 'Playing...' : 'Tap to Play Conversation/Talk & Question'}
+              {isActive ? 'Playing...' : 'Tap to Play Conversation/Talk & Question'}
             </p>
             <p className="text-xs text-slate-500">Then answer the question below</p>
           </div>
@@ -587,6 +598,7 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
                 onAnswer={handleAnswer}
                 playingAudioId={playingAudioId}
                 setPlayingAudioId={setPlayingAudioId}
+                allQuestions={data.questions}
               />
             ))}
           </div>
