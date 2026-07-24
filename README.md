@@ -11,6 +11,35 @@ An AI-powered English proficiency practice exam application. Generate custom pra
 - Mock mode for testing without an API key
 - Session history and review
 
+## Quick Start
+
+### Prerequisites
+
+- **Node.js 20+** – https://nodejs.org/
+- **Python 3** – `sudo apt install python3 python3-pip`
+- **ffmpeg** – `sudo apt install ffmpeg`
+
+### Install
+
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+This installs Node.js dependencies, Python's `edge-tts`, and verifies everything is ready.
+
+### Run
+
+```bash
+# Terminal 1 – API server
+npx tsx server/app.ts
+
+# Terminal 2 – Vite dev server
+npx vite
+```
+
+Then open **http://localhost:5173** in your browser.
+
 ## Trademark Disclaimer
 
 This project is not affiliated with, endorsed by, or sponsored by ETS (Educational Testing Service). TOEIC is a registered trademark of Educational Testing Service. This is an independent educational tool.
