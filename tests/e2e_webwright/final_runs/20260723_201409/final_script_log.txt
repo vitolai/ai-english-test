@@ -1,0 +1,10 @@
+2026-07-23 20:14:09,345 [INFO] ======================================================================
+2026-07-23 20:14:09,345 [INFO] TEST: test_timer_enforcement.py — Timer L→R Enforcement
+2026-07-23 20:14:09,345 [INFO] RUN_ID: 20260723_201409
+2026-07-23 20:14:09,345 [INFO] ======================================================================
+2026-07-23 20:14:27,593 [INFO] Generating 10Q exam via API...
+2026-07-23 20:14:34,737 [INFO] SCREENSHOT 1: 01_ERROR.png
+2026-07-23 20:14:34,737 [ERROR] TEST FAILED: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: /api/generate (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7945b36b1040>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-07-23 20:14:34,737 [INFO] ======================================================================
+2026-07-23 20:14:34,737 [INFO] RESULT: FAIL
+2026-07-23 20:14:34,737 [INFO] ======================================================================

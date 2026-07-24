@@ -244,15 +244,133 @@ const PART5_FALLBACK_QUESTIONS = [
   { question: "The conference room has been ______ for tomorrow's meeting.", options: ["reserved", "reserve", "reserving", "reserves"], answer: "A" },
 ];
 
+// Mock Part 5 options used to replace invalid AI-generated options
+// (numeric-only, duplicate, too short, or symbol-only).
+// Each entry is a set of 4 grammar-appropriate options for fill-in-the-blank.
+const MOCK_PART5_FALLBACKS: { question: string; options: string[]; answer: 'A' | 'B' | 'C' | 'D' }[] = [
+  { question: "The manager requested that all reports be submitted ______ the deadline.", options: ["before", "during", "without", "underneath"], answer: "A" },
+  { question: "Employees are required to complete the training program ______.", options: ["annually", "accidentally", "anonymously", "arrogantly"], answer: "A" },
+  { question: "The shipment will arrive ______ two business days.", options: ["within", "beside", "beneath", "beyond"], answer: "A" },
+  { question: "Please ensure that all forms are filled out ______ before submission.", options: ["completely", "competitively", "conventionally", "cautiously"], answer: "A" },
+  { question: "The company policy ______ smoking in all indoor areas.", options: ["prohibits", "proposes", "promotes", "produces"], answer: "A" },
+  { question: "Candidates must possess strong ______ skills to be considered.", options: ["communication", "concentration", "conservation", "contribution"], answer: "A" },
+  { question: "The conference has been ______ until further notice.", options: ["postponed", "preferred", "produced", "presented"], answer: "A" },
+  { question: "All vendors must submit their proposals by the end of the ______.", options: ["month", "moment", "motor", "method"], answer: "A" },
+  { question: "The new software update will ______ system performance significantly.", options: ["improve", "import", "impose", "impair"], answer: "A" },
+  { question: "Please refer to the employee handbook for further ______.", options: ["guidelines", "guardians", "guarantees", "guesswork"], answer: "A" },
+  { question: "The office will be closed ______ the upcoming holiday weekend.", options: ["during", "despite", "denial", "deputy"], answer: "A" },
+  { question: "We are looking for a candidate with ______ in project management.", options: ["experience", "experiment", "expedition", "expectation"], answer: "A" },
+  { question: "The board of directors will ______ the proposal at next week's meeting.", options: ["review", "refuse", "refund", "refuel"], answer: "A" },
+  { question: "Clients are encouraged to provide ______ about their experience.", options: ["feedback", "feedstock", "foodstuff", "footwork"], answer: "A" },
+  { question: "The training session will be conducted by a ______ professional.", options: ["qualified", "quarreled", "quantity", "quarterly"], answer: "A" },
+  { question: "All invoices must be ______ before payment can be processed.", options: ["approved", "applauded", "approached", "appraised"], answer: "A" },
+  { question: "The company is committed to maintaining a ______ work environment.", options: ["safe", "sad", "saw", "sag"], answer: "A" },
+  { question: "Please make sure to attach all ______ documents to your application.", options: ["relevant", "reluctant", "relieved", "relaxed"], answer: "A" },
+  { question: "The project deadline has been extended ______ one week.", options: ["by", "my", "fly", "rye"], answer: "A" },
+  { question: "We appreciate your ______ in completing this task ahead of schedule.", options: ["promptness", "prominence", "promise", "proposal"], answer: "A" },
+  { question: "The following changes will take ______ on January first.", options: ["effect", "effort", "affect", "defect"], answer: "A" },
+  { question: "Please contact the HR department if you have any ______.", options: ["concerns", "concerts", "concepts", "condemns"], answer: "A" },
+  { question: "The report should be ______ to the marketing director by Friday.", options: ["submitted", "subjected", "succeeded", "suggested"], answer: "A" },
+  { question: "All employees must ______ the safety protocols at all times.", options: ["follow", "fellow", "fossil", "fondle"], answer: "A" },
+  { question: "The company is ______ a new benefits package for all staff members.", options: ["introducing", "instructing", "inspecting", "insulting"], answer: "A" },
+  { question: "Please ensure that your workspace is ______ organized at all times.", options: ["neatly", "nearly", "neither", "neglect"], answer: "A" },
+  { question: "The customer service team handles all ______ inquiries promptly.", options: ["incoming", "income", "incomplete", "incorrect"], answer: "A" },
+  { question: "Our department has ______ a 15% increase in productivity this quarter.", options: ["achieved", "attended", "attempted", "attributed"], answer: "A" },
+  { question: "The memo was sent to all staff members ______ the policy change.", options: ["regarding", "regretting", "rejecting", "relieving"], answer: "A" },
+  { question: "Please remember to ______ your badge before entering the building.", options: ["wear", "weary", "weird", "weave"], answer: "A" },
+  { question: "The director will ______ the final decision by end of week.", options: ["make", "makes", "making", "made"], answer: "A" },
+  { question: "All staff are expected to ______ the new guidelines immediately.", options: ["follow", "follows", "followed", "following"], answer: "A" },
+  { question: "The company ______ generous benefits to all full-time employees.", options: ["offers", "offer", "offered", "offering"], answer: "A" },
+  { question: "Please ensure that all ______ are submitted before the deadline.", options: ["documents", "document", "documented", "documenting"], answer: "A" },
+  { question: "The team worked ______ to complete the project ahead of schedule.", options: ["diligently", "diligence", "diligent", "diligence's"], answer: "A" },
+  { question: "Candidates must submit their applications ______ the portal.", options: ["through", "thorough", "thoroughly", "threw"], answer: "A" },
+  { question: "The company is committed to providing a ______ work environment.", options: ["safe", "safely", "safety", "safer"], answer: "A" },
+  { question: "The proposal was ______ by the board of directors.", options: ["approved", "approve", "approving", "approves"], answer: "A" },
+  { question: "Please ______ your manager if you have any questions about the policy.", options: ["contact", "contacts", "contacted", "contacting"], answer: "A" },
+  { question: "The annual report will be ______ next month.", options: ["released", "release", "releasing", "releases"], answer: "A" },
+];
+
+// Check if an option is purely numeric / symbol / too short to be a valid
+// Part 5 fill-in-the-blank answer choice.
+function isInvalidP5Option(opt: string): boolean {
+  if (!opt || typeof opt !== 'string') return true;
+  const trimmed = opt.trim();
+  // Too short
+  if (trimmed.length < 2) return true;
+  // Purely numeric, %, degrees, currency, or symbols (no letters)
+  if (/^[\d\s.,%°$€£¥#*+\-/\\=<>@!&(){}\[\]|;:]+$/.test(trimmed)) return true;
+  // Contains only whitespace + punctuation / symbols
+  if (!/[a-zA-Z]/.test(trimmed)) return true;
+  return false;
+}
+
 export function ensurePart5Questions(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
   let p5Index = 0;
+
   return questions.map(q => {
     if (q['part'] === 5 && q['type'] === 'reading') {
-      if (!q['question'] || q['question'] === '' || !q['options'] || (q['options'] as string[]).length < 4) {
+      const hasEmpty = !q['question'] || q['question'] === '' || !q['options'] || (q['options'] as string[]).length < 4;
+
+      // If the question or options are missing entirely, use full fallback
+      if (hasEmpty) {
         const fb = PART5_FALLBACK_QUESTIONS[p5Index % PART5_FALLBACK_QUESTIONS.length];
         if (!q['question'] || q['question'] === '') q['question'] = fb.question;
         if (!q['options'] || (q['options'] as string[]).length < 4) q['options'] = fb.options;
         if (!q['answer'] || q['answer'] === '') q['answer'] = fb.answer;
+        p5Index++;
+        return q;
+      }
+
+      // Validate individual options: reject numeric-only, duplicate, too-short, symbol-only
+      const opts = q['options'] as string[];
+      const seen = new Set<string>();
+      let allValid = true;
+
+      for (const opt of opts) {
+        const lower = opt.toLowerCase().trim();
+        if (isInvalidP5Option(opt) || seen.has(lower)) {
+          allValid = false;
+          break;
+        }
+        seen.add(lower);
+      }
+
+      if (!allValid) {
+        // Replace with a full mock question to guarantee coherence
+        const fb = MOCK_PART5_FALLBACKS[p5Index % MOCK_PART5_FALLBACKS.length];
+        q['question'] = fb.question;
+        q['options'] = fb.options;
+
+        // Randomly distribute the correct answer across A/B/C/D
+        const correctIdx = Math.floor(Math.random() * 4);
+        const answerKey = (['A', 'B', 'C', 'D'] as const)[correctIdx];
+        q['answer'] = answerKey;
+
+        // Rotate options so the correct answer is at the chosen index
+        if (correctIdx !== 0) {
+          const rotated = [...fb.options];
+          const correctOption = rotated[0];
+          rotated.splice(0, 1);
+          rotated.splice(correctIdx, 0, correctOption);
+          q['options'] = rotated;
+        }
+
+        console.warn(`[P5] Invalid options detected (id=${q['id']}) — replaced with mock fallback (answer=${answerKey})`);
+        p5Index++;
+      } else {
+        // Options pass validation — still randomize answer position
+        const opts = q['options'] as string[];
+        const correctIdx = Math.floor(Math.random() * 4);
+        const answerKey = (['A', 'B', 'C', 'D'] as const)[correctIdx];
+
+        if (correctIdx !== 0) {
+          const correctOption = opts[0];
+          opts.splice(0, 1);
+          opts.splice(correctIdx, 0, correctOption);
+          q['options'] = opts;
+        }
+
+        q['answer'] = answerKey;
         p5Index++;
       }
     }
@@ -329,7 +447,6 @@ export function ensurePart6Questions(questions: Array<Record<string, unknown>>):
           const localIdx = p6Index % entry.questions.length;
           q['answer'] = entry.questions[localIdx].answer;
         }
-        p6Index++;
       } else {
         // Passage and question both exist — verify alignment
         const passage = (q['passage'] as string) || '';
@@ -341,8 +458,14 @@ export function ensurePart6Questions(questions: Array<Record<string, unknown>>):
           q['options'] = replacement.options;
           q['answer'] = replacement.answer;
         }
-        p6Index++;
       }
+      // FR-GEN-13: shuffle options and set answer to shuffled position
+      const opts = q['options'] as string[];
+      const ans = (q['answer'] as string) || 'A';
+      const shuffled = shuffleOptionsWithAnswer(opts, ans);
+      q['options'] = shuffled.options;
+      q['answer'] = shuffled.answer;
+      p6Index++;
     }
     return q;
   });
@@ -479,6 +602,14 @@ export function ensurePart7Questions(questions: Array<Record<string, unknown>>):
       if (passage.trim().length === 0) {
         q['passage'] = buildPassageFromQuestion(q);
       }
+      // FR-GEN-13: shuffle options and set answer to shuffled position
+      const opts = (q['options'] as string[]) || [];
+      const ans = (q['answer'] as string) || 'A';
+      if (opts.length >= 4) {
+        const shuffled = shuffleOptionsWithAnswer(opts, ans);
+        q['options'] = shuffled.options;
+        q['answer'] = shuffled.answer;
+      }
     }
     return q;
   });
@@ -542,8 +673,10 @@ export function ensureRandomModeBusiness(
       const mock = pickRandomBusinessQuestion();
       q['passage'] = mock.passage;
       q['question'] = mock.question;
-      q['options'] = mock.options;
-      q['answer'] = mock.answer;
+      // FR-GEN-13: shuffle options and set answer to shuffled position
+      const shuffled = shuffleOptionsWithAnswer([...mock.options], mock.answer);
+      q['options'] = shuffled.options;
+      q['answer'] = shuffled.answer;
     }
 
     return q;
@@ -557,6 +690,16 @@ export function ensureRandomModeBusiness(
 // carry AI-generated content that doesn't match the canonical mock datasets.
 // This normalizer unconditionally replaces the relevant fields so that every
 // listening question is guaranteed coherent with its source image/transcript.
+
+// Shuffle options array and return the new answer key for the correct answer.
+// FR-GEN-13: All mock arrays must shuffle options and set answer to shuffled position.
+function shuffleOptionsWithAnswer(options: string[], answer: string): { options: string[]; answer: string } {
+  const correctIdx = 'ABCD'.indexOf(answer);
+  const correctOption = options[correctIdx >= 0 ? correctIdx : 0];
+  const shuffled = shuffleArray(options);
+  const newIdx = shuffled.indexOf(correctOption);
+  return { options: shuffled, answer: 'ABCD'[newIdx >= 0 ? newIdx : 0] };
+}
 
 function shuffleArray<T>(arr: readonly T[]): T[] {
   const shuffled = [...arr];
@@ -638,8 +781,10 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
       const mockQ = mockConv.questions[qInGroup];
       q['transcript'] = mockConv.transcript;
       q['question'] = mockQ.question;
-      q['options'] = [...mockQ.options];
-      q['answer'] = mockQ.answer;
+      // FR-GEN-13: shuffle options and set answer to shuffled position
+      const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
+      q['options'] = shuffled.options;
+      q['answer'] = shuffled.answer;
       p3GroupIdx++;
     }
 
@@ -650,8 +795,10 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
       const mockQ = mockTalk.questions[qInGroup];
       q['transcript'] = mockTalk.transcript;
       q['question'] = mockQ.question;
-      q['options'] = [...mockQ.options];
-      q['answer'] = mockQ.answer;
+      // FR-GEN-13: shuffle options and set answer to shuffled position
+      const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
+      q['options'] = shuffled.options;
+      q['answer'] = shuffled.answer;
       p4GroupIdx++;
     }
 
@@ -2665,6 +2812,8 @@ export function generateMockData(count: number, sessionId: string): ExamData {
     } else if (i <= endP5) {
       // Part 5: Incomplete Sentences - fill-in-the-blank, 4 options
       const d = PART5_QUESTIONS[(i - listeningCount - 1) % PART5_QUESTIONS.length];
+      // FR-GEN-13: shuffle options and set answer to shuffled position
+      const shuffled5 = shuffleOptionsWithAnswer([...d.options], d.answer);
       questions.push({
         id: i,
         part: 5,
@@ -2673,12 +2822,14 @@ export function generateMockData(count: number, sessionId: string): ExamData {
         transcript: undefined,
         audio: undefined,
         question: d.question,
-        options: d.options,
-        answer: d.answer as 'A' | 'B' | 'C' | 'D',
+        options: shuffled5.options,
+        answer: shuffled5.answer as 'A' | 'B' | 'C' | 'D',
       });
     } else if (i <= endP6) {
       // Part 6: Text Completion - fill-in-the-blank in passage context, 4 options
       const d = PART6_QUESTIONS[(i - endP5 - 1) % PART6_QUESTIONS.length];
+      // FR-GEN-13: shuffle options and set answer to shuffled position
+      const shuffled6 = shuffleOptionsWithAnswer([...d.options], d.answer);
       questions.push({
         id: i,
         part: 6,
@@ -2687,12 +2838,14 @@ export function generateMockData(count: number, sessionId: string): ExamData {
         transcript: undefined,
         audio: undefined,
         question: d.question,
-        options: d.options,
-        answer: d.answer as 'A' | 'B' | 'C' | 'D',
+        options: shuffled6.options,
+        answer: shuffled6.answer as 'A' | 'B' | 'C' | 'D',
       });
     } else if (i <= endP7) {
       // Part 7: Reading Comprehension - question about passage, 4 options
       const d = PART7_QUESTIONS[(i - endP6 - 1) % PART7_QUESTIONS.length];
+      // FR-GEN-13: shuffle options and set answer to shuffled position
+      const shuffled7 = shuffleOptionsWithAnswer([...d.options], d.answer);
       questions.push({
         id: i,
         part: 7,
@@ -2701,8 +2854,8 @@ export function generateMockData(count: number, sessionId: string): ExamData {
         transcript: undefined,
         audio: undefined,
         question: d.question,
-        options: d.options,
-        answer: d.answer as 'A' | 'B' | 'C' | 'D',
+        options: shuffled7.options,
+        answer: shuffled7.answer as 'A' | 'B' | 'C' | 'D',
       });
     }
   }
