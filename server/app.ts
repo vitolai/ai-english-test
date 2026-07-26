@@ -71,7 +71,31 @@ const stores: SessionStores = { sseClients, sessionStatus };
 const app = express();
 const PORT = 3001;
 
-app.use(cors());
+const isLocalhost = (origin: string) => /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
+const allowedOrigins: string[] = [
+  'http://localhost:5173',
+  'http://localhost:3001',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3001',
+];
+
+if (process.env.ALLOWED_ORIGINS) {
+  for (const o of process.env.ALLOWED_ORIGINS.split(',')) {
+    const trimmed = o.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) allowedOrigins.push(trimmed);
+  }
+}
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || isLocalhost(origin) || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS origin not allowed: ${origin}`));
+    }
+  },
+}));
 app.use(express.json({ limit: '10mb' }));
 app.get('/storage/sessions/:sessionId/exam_data.json', (req: Request, res: Response) => {
   const filePath = path.join(STORAGE_DIR, req.params.sessionId, 'exam_data.json');
