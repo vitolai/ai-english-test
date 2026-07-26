@@ -2,33 +2,30 @@ import { describe, it, expect } from 'vitest';
 import {
   PROVIDERS,
   PROVIDER_IDS,
-  ACTIVE_PROVIDERS,
   getProvider,
   getModel,
-  getDefaultModelId,
 } from '../../src/lib/providers';
-import type { ProviderId } from '../../src/lib/providers';
 
 describe('Provider Registry', () => {
   describe('PROVIDERS constant', () => {
     it('should have all expected providers', () => {
-      expect(PROVIDERS).toHaveProperty('nvidia-nemotron');
+      expect(PROVIDERS).toHaveProperty('nvidia');
       expect(PROVIDERS).toHaveProperty('openrouter');
       expect(PROVIDERS).toHaveProperty('groq');
       expect(PROVIDERS).toHaveProperty('mock');
     });
 
     it('should have correct provider count', () => {
-      expect(Object.keys(PROVIDERS)).toHaveLength(4);
+      expect(Object.keys(PROVIDERS)).toHaveLength(13);
     });
 
-    it('should have nvidia-nemotron with correct properties', () => {
-      const provider = PROVIDERS['nvidia-nemotron'];
-      expect(provider.id).toBe('nvidia-nemotron');
+    it('should have nvidia with correct properties', () => {
+      const provider = PROVIDERS.nvidia;
+      expect(provider.id).toBe('nvidia');
       expect(provider.name).toBe('NVIDIA Nemotron');
       expect(provider.category).toBe('cloud');
       expect(provider.requiresApiKey).toBe(true);
-      expect(provider.models).toHaveLength(2);
+      expect(provider.models).toHaveLength(3);
     });
 
     it('should have openrouter with correct properties', () => {
@@ -50,7 +47,7 @@ describe('Provider Registry', () => {
     it('should have mock provider for testing', () => {
       const provider = PROVIDERS.mock;
       expect(provider.id).toBe('mock');
-      expect(provider.name).toBe('Mock Mode (Test Only)');
+      expect(provider.name).toBe('Mock');
       expect(provider.requiresApiKey).toBe(false);
       expect(provider.models).toHaveLength(1);
     });
@@ -58,67 +55,53 @@ describe('Provider Registry', () => {
 
   describe('PROVIDER_IDS', () => {
     it('should contain all provider IDs', () => {
-      expect(PROVIDER_IDS).toContain('nvidia-nemotron');
+      expect(PROVIDER_IDS).toContain('nvidia');
       expect(PROVIDER_IDS).toContain('openrouter');
       expect(PROVIDER_IDS).toContain('groq');
       expect(PROVIDER_IDS).toContain('mock');
     });
 
-    it('should have 4 providers', () => {
-      expect(PROVIDER_IDS).toHaveLength(4);
-    });
-  });
-
-  describe('ACTIVE_PROVIDERS', () => {
-    it('should exclude mock provider', () => {
-      expect(ACTIVE_PROVIDERS).not.toContain('mock');
-    });
-
-    it('should have 3 active providers', () => {
-      expect(ACTIVE_PROVIDERS).toHaveLength(3);
+    it('should have 13 providers', () => {
+      expect(PROVIDER_IDS).toHaveLength(13);
     });
   });
 
   describe('getProvider()', () => {
     it('should return provider by ID', () => {
-      const provider = getProvider('nvidia-nemotron');
-      expect(provider.id).toBe('nvidia-nemotron');
-      expect(provider.name).toBe('NVIDIA Nemotron');
+      const provider = getProvider('nvidia');
+      expect(provider).toBeDefined();
+      expect(provider?.id).toBe('nvidia');
+      expect(provider?.name).toBe('NVIDIA Nemotron');
     });
 
-    it('should throw for unknown provider ID', () => {
-      expect(() => getProvider('unknown' as unknown as ProviderId)).toThrow('Unknown provider: unknown');
+    it('should return undefined for unknown provider ID', () => {
+      const provider = getProvider('unknown');
+      expect(provider).toBeUndefined();
+    });
+
+    it('should return mock provider with hidden flag', () => {
+      const provider = getProvider('mock');
+      expect(provider).toBeDefined();
+      expect(provider?.hidden).toBe(true);
     });
   });
 
   describe('getModel()', () => {
-    it('should return model by provider and model ID', () => {
-      const model = getModel('nvidia-nemotron', 'nemotron-3-ultra-550b');
+    it('should return model by provider and namespaced model ID', () => {
+      const model = getModel('nvidia', 'nvidia/nemotron-3-ultra-550b');
       expect(model).toBeDefined();
-      expect(model?.id).toBe('nemotron-3-ultra-550b');
+      expect(model?.id).toBe('nvidia/nemotron-3-ultra-550b');
       expect(model?.name).toBe('Nemotron 3 Ultra (550B)');
     });
 
     it('should return undefined for non-existent model', () => {
-      const model = getModel('nvidia-nemotron', 'non-existent-model');
+      const model = getModel('nvidia', 'non-existent-model');
       expect(model).toBeUndefined();
     });
 
     it('should return undefined for non-existent provider', () => {
-      const model = getModel('unknown' as unknown as ProviderId, 'model-id');
+      const model = getModel('unknown', 'model-id');
       expect(model).toBeUndefined();
-    });
-  });
-
-  describe('getDefaultModelId()', () => {
-    it('should return first model ID for provider', () => {
-      const defaultId = getDefaultModelId('nvidia-nemotron');
-      expect(defaultId).toBe('nemotron-3-ultra-550b');
-    });
-
-    it('should return empty string for unknown provider', () => {
-      const defaultId = getDefaultModelId('unknown' as unknown as ProviderId);
-      expect(defaultId).toBe('');
     });
   });
 
