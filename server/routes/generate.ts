@@ -25,6 +25,7 @@ import {
 } from '../services/ai.js';
 import { generateAudio } from '../services/audio.js';
 import type { SessionStores } from '../app.js';
+import { persistSessionStatus } from '../app.js';
 
 const router = Router();
 
@@ -40,6 +41,7 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
 
   function setStatus(sessionId: string, status: { phase: string; progress: number; message: string }) {
     sessionStatus.set(sessionId, status);
+    persistSessionStatus();
     sendSSE(sessionId, { type: 'progress', ...status });
   }
 
@@ -339,9 +341,17 @@ Return ONLY valid JSON: { "questions": [...] }`;
         fs.writeFileSync(skeletonPath, JSON.stringify(examData, null, 2));
 
         setStatus(session_id, { phase: 'audio', progress: 95, message: 'Generating audio files...' });
-        await generateAudio(skeletonPath, audioDir);
+        const audioResult = await generateAudio(skeletonPath, audioDir);
+        if (!audioResult.success) {
+          const audioMsg = `Audio generation failed: ${audioResult.error}`;
+          console.warn('[Audio]', audioMsg);
+          setStatus(session_id, { phase: 'error', progress: 0, message: audioMsg });
+          sendSSE(session_id, { type: 'error', message: audioMsg });
+          return;
+        }
 
         sessionStatus.set(session_id, { phase: 'completed', progress: 100, message: 'Done!' });
+        persistSessionStatus();
         sendSSE(session_id, { type: 'complete', session_id, data: examData });
         console.log(`[Done] Session ${session_id}: ${finalQuestions.length} questions`);
         return;
@@ -355,6 +365,7 @@ Return ONLY valid JSON: { "questions": [...] }`;
           fs.mkdirSync(audioDir, { recursive: true });
           fs.writeFileSync(skeletonPath, JSON.stringify({ title: 'TOEIC Session', questions: [], status: 'generating' }, null, 2));
           sessionStatus.set(session_id, { phase: 'generating', progress: 0, message: `Retry ${validationAttempt}/${maxValidationRetries}: regenerating questions...` });
+          persistSessionStatus();
           sendSSE(session_id, { type: 'progress', phase: 'retrying', progress: 0, message: `Retrying (${validationAttempt}/${maxValidationRetries}): regenerating questions...` });
           const delayMs = validationAttempt * 2000;
           console.log(`[Retry] Waiting ${delayMs}ms before retry ${validationAttempt + 1}...`);
@@ -364,6 +375,7 @@ Return ONLY valid JSON: { "questions": [...] }`;
         const msg = err instanceof Error ? err.message : String(err);
         console.error('[Fatal]', msg);
         sessionStatus.set(session_id, { phase: 'error', progress: 0, message: msg });
+        persistSessionStatus();
         sendSSE(session_id, { type: 'error', message: msg });
         try {
           const errorData = JSON.parse(fs.readFileSync(skeletonPath, 'utf-8'));

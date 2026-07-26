@@ -17,6 +17,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 
 const STORAGE_DIR = path.join(ROOT_DIR, 'storage', 'sessions');
 const UPLOAD_DIR = path.join(ROOT_DIR, 'storage', 'uploads');
+const SESSION_STATUS_FILE = path.join(ROOT_DIR, 'storage', 'session_status.json');
 if (!fs.existsSync(STORAGE_DIR)) fs.mkdirSync(STORAGE_DIR, { recursive: true });
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -31,6 +32,34 @@ export interface SessionStores {
 
 const sseClients = new Map<string, Response>();
 const sessionStatus = new Map<string, { phase: string; progress: number; message: string }>();
+
+function loadSessionStatus() {
+  try {
+    if (fs.existsSync(SESSION_STATUS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(SESSION_STATUS_FILE, 'utf-8')) as Record<string, { phase: string; progress: number; message: string }>;
+      for (const [k, v] of Object.entries(data)) {
+        sessionStatus.set(k, v);
+      }
+      console.log(`[Session] Loaded ${sessionStatus.size} session(s) from disk`);
+    }
+  } catch (err) {
+    console.warn('[Session] Failed to load session status:', err instanceof Error ? err.message : String(err));
+  }
+}
+
+export function persistSessionStatus() {
+  try {
+    const obj: Record<string, { phase: string; progress: number; message: string }> = {};
+    for (const [k, v] of sessionStatus) {
+      obj[k] = v;
+    }
+    fs.writeFileSync(SESSION_STATUS_FILE, JSON.stringify(obj, null, 2));
+  } catch (err) {
+    console.warn('[Session] Failed to persist session status:', err instanceof Error ? err.message : String(err));
+  }
+}
+
+loadSessionStatus();
 
 const stores: SessionStores = { sseClients, sessionStatus };
 
