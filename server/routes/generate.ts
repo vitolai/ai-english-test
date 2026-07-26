@@ -12,7 +12,6 @@ import {
   generateWithFallback,
   generateMockData,
   ensurePart1Images,
-  ensurePart2EmptyQuestion,
   ensurePart2Transcripts,
   ensurePart34Transcripts,
   ensurePart5Questions,
@@ -348,7 +347,6 @@ Return ONLY valid JSON: { "questions": [...] }`;
         finalQuestions = validation.questions;
 
         finalQuestions = ensurePart1Images(finalQuestions);
-        finalQuestions = ensurePart2EmptyQuestion(finalQuestions);
         finalQuestions = ensurePart2Transcripts(finalQuestions);
         finalQuestions = ensurePart34Transcripts(finalQuestions);
         finalQuestions = ensurePart5Questions(finalQuestions);

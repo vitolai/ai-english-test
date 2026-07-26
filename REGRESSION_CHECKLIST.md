@@ -143,15 +143,15 @@
 ## 📋 HOW TO RUN
 
 ```bash
-# 1. Quick smoke test (CP + UX)
+# 1. Quick smoke test (default scale)
 cd /home/vlw/toeic-ai-pro-w
-./scripts/run_regression_smoke.sh
+python3 scripts/run_regression.py
 
-# 2. Full regression (all sections)
-./scripts/run_regression_full.sh
+# 2. Custom scale test (pick your scale)
+python3 scripts/run_regression.py --scale 10   # or 20, 50, 100, 200
 
-# 3. Scale test (pick one)
-./scripts/run_scale_test.sh 10   # or 20, 50, 100, 200
+# 3. Real provider mode (optional)
+python3 scripts/run_regression.py --scale 50 --real
 
 # 4. Mock mode CI
 npm run test:contract && npm run test:e2e:mock

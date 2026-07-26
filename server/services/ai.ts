@@ -1,4 +1,4 @@
-import { generateObject, streamObject } from 'ai';
+import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGroq } from '@ai-sdk/groq';
 import { z } from 'zod';
@@ -34,19 +34,7 @@ export class RetryableDistributionError extends Error {
   }
 }
 
-// Fallback: ensure Part 1 questions always have an image
-// Verified-working Unsplash photo IDs (return HTTP 200) used as fallbacks
-// in ensurePart1Images. Kept in sync with PART1_DATA so that any fallback image
-// also has a matching set of descriptive options in the mock generator.
-const FALLBACK_PHOTO_IDS = [
-  '1556761175-b413da4baf72','1497366216548-37526070297c','1524758631624-e2822e304c36',
-  '1591115765373-5207764f72e7','1450101499163-c8848c66ca85','1556740738-b6a63e27c4df',
-  '1517502884422-41eaead166d4','1504384308090-c894fdcc538d','1553028826-f4804a6dba3b',
-  '1573164713714-d95e436ab8d6','1498050108023-c5249f4df085','1554224155-6726b3ff858f',
-  '1522071820081-009f0129c71c','1515187029135-18ee286d815b','1486312338219-ce68d2c6f44d',
-  '1527192491265-7e15c55b1ed2','1497366754035-f200968a6e72','1497215842964-222b430dc094',
-  '1519389950473-47ba0277781c',
-];
+
 
 // Fallback: ensure Part 2 questions have a spoken question in transcript
 const PART2_FALLBACK_QUESTIONS = [
@@ -88,26 +76,7 @@ export function ensurePart2Transcripts(questions: Array<Record<string, unknown>>
   });
 }
 
-// Normalize Part 2 (Question-Response): q.question MUST be empty string.
-// Per TOEIC spec, Part 2 is audio-only — the spoken question lives in
-// q.transcript + audio, never on screen. The real-AI provider sometimes
-// returns a non-empty q.question; this normalizer strips it back to "".
-// Mirrors the ensurePart1Images / ensurePart34Transcripts pattern.
-export function ensurePart2EmptyQuestion(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
-  return questions.map(q => {
-    if (q['part'] === 2 && q['type'] === 'listening') {
-      if (q['question'] && q['question'] !== '') {
-        // Preserve the spoken question in transcript if AI put it only in question
-        // and transcript is empty (defensive — do not overwrite a real transcript).
-        if ((!q['transcript'] || q['transcript'] === '') && typeof q['question'] === 'string') {
-          q['transcript'] = q['question'];
-        }
-        q['question'] = '';
-      }
-    }
-    return q;
-  });
-}
+
 
 
 // Fallback: ensure Part 3/4 questions have transcript (conversation/talk) and question text
@@ -1000,39 +969,7 @@ export async function generateWithFallback(
   throw lastError || new Error('All providers failed');
 }
 
-// ============================================================
-// STREAM WITH FALLBACK
-// ============================================================
 
-export async function streamWithFallback(
-  chain: ProviderEntry[],
-  schema: z.ZodSchema,
-  prompt: string,
-  maxRetries = 5,
-) {
-  let lastError: Error | undefined;
-
-  for (const entry of chain) {
-    try {
-      console.log(`[AI] Streaming with provider: ${entry.id} / ${entry.model}`);
-      const providerFactory = createLanguageModel(entry.id, entry.apiKey, entry.baseURL);
-      const model = providerFactory(entry.model);
-      const result = streamObject({
-        model,
-        schema,
-        prompt,
-        maxRetries,
-      });
-      console.log(`[AI] Stream started: ${entry.id}`);
-      return { result, providerId: entry.id };
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      console.warn(`[AI] Provider ${entry.id} stream failed: ${lastError.message}`);
-    }
-  }
-
-  throw lastError || new Error('All providers failed');
-}
 
 // ============================================================
 // PROVIDER CHAIN BUILDER

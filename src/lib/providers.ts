@@ -283,17 +283,7 @@ export function resolveProviderFromLegacySource(s: string): string {
   return LEGACY_AI_SOURCE_MAP[s] || 'nvidia';
 }
 
-export const GATEWAY_URLS: Record<string, string> = {
-  orcln: 'http://orcln:8080/v1',
-  pi5n: 'http://pi5n:8080/v1',
-  wsl2n: 'http://localhost:8080/v1',
-  msin: 'http://localhost:8080/v1',
-  ecn2: 'http://ecn2:8080/v1',
-  gcpn: 'http://gcpn:8080/v1',
-};
-export function getGatewayUrlForHost(h: string): string {
-  return GATEWAY_URLS[h] || 'https://integrate.api.nvidia.com/v1';
-}
+
 
 export function getModelsWithCapability<K extends keyof ModelCapabilities>(capability: K, v = true) {
   return getAllModels().filter(({ model }) => model.capabilities[capability] === v);
