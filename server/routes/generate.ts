@@ -29,6 +29,21 @@ import { persistSessionStatus } from '../app.js';
 
 const router = Router();
 
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 60_000;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  return entry.count > RATE_LIMIT_MAX;
+}
+
 export function createGenerateRouter(stores: SessionStores, storageDir: string): Router {
   const { sseClients, sessionStatus } = stores;
 
@@ -46,6 +61,12 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
   }
 
   router.post('/api/generate', (req, res) => {
+    const clientIp = (req.ip || req.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
+    if (checkRateLimit(clientIp)) {
+      res.status(429).json({ error: 'Rate limit exceeded. Max 5 requests per minute.' });
+      return;
+    }
+
     const { seedText, questionCount, model, apiKey, config, sourceType } = req.body as {
       seedText?: string;
       questionCount: number;

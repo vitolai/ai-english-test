@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import type { Response, Request } from 'express';
 import { createGenerateRouter } from './routes/generate.js';
 import { createIngestRouter } from './routes/ingest.js';
+import { PROVIDERS } from '../src/lib/providers.js';
 
 // ============================================================
 // DIRECTORY SETUP
@@ -131,11 +132,21 @@ app.get('/api/status/:sessionId', (req: Request, res: Response) => {
 // PROVIDER HEALTH CHECK ENDPOINT
 // ============================================================
 
-const PROVIDER_HEALTH_LIST = [
-  { id: 'nvidia-nemotron', name: 'NVIDIA Nemotron', baseURL: 'http://localhost:8080/v1' },
-  { id: 'openrouter', name: 'OpenRouter', baseURL: 'https://openrouter.ai/api/v1' },
-  { id: 'groq', name: 'Groq', baseURL: 'https://api.groq.com/openai/v1' },
-];
+const PROVIDER_HEALTH_LIST = Object.values(PROVIDERS)
+  .filter(p => !p.hidden && !p.userProvidesBaseUrl && p.baseUrl !== 'mock://local')
+  .map(p => ({ id: p.id, name: p.name, baseURL: p.baseUrl }));
+
+const PROVIDER_ENV_KEYS: Record<string, string> = {
+  nvidia: 'NVIDIA_API_KEY',
+  openrouter: 'OPENROUTER_API_KEY',
+  groq: 'GROQ_API_KEY',
+  anthropic: 'ANTHROPIC_API_KEY',
+  google: 'GOOGLE_API_KEY',
+  together: 'TOGETHER_API_KEY',
+  deepseek: 'DEEPSEEK_API_KEY',
+  cohere: 'COHERE_API_KEY',
+  ollama: 'OLLAMA_API_KEY',
+};
 
 interface ProviderHealth {
   id: string;
@@ -146,12 +157,6 @@ interface ProviderHealth {
   error: string | null;
 }
 
-const API_KEY_ENV_MAP: Record<string, string> = {
-  'nvidia-nemotron': 'NVIDIA_API_KEY',
-  openrouter: 'OPENROUTER_API_KEY',
-  groq: 'GROQ_API_KEY',
-};
-
 app.get('/api/health/providers', async (_req: Request, res: Response) => {
   const results = await Promise.allSettled(
     PROVIDER_HEALTH_LIST.map(async (p): Promise<ProviderHealth> => {
@@ -159,7 +164,7 @@ app.get('/api/health/providers', async (_req: Request, res: Response) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
         const response = await fetch(p.baseURL + '/models', {
-          headers: { Authorization: 'Bearer ' + (process.env[API_KEY_ENV_MAP[p.id]] || 'test') },
+          headers: { Authorization: 'Bearer ' + (process.env[PROVIDER_ENV_KEYS[p.id] || 'test') },
           signal: controller.signal,
         });
         clearTimeout(timeout);
