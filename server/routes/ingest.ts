@@ -92,7 +92,7 @@ export function createIngestRouter(uploadDir: string): Router {
   });
 
   // Firecrawl web search (free tier)
-  router.post('/api/ingest/search', async (req, res) => {
+  router.post('/api/ingest/search', ingestRateLimit, async (req, res) => {
     const { query, limit } = req.body as { query?: string; limit?: number };
     if (!query) {
       res.status(400).json({ error: 'Search query is required.' });
