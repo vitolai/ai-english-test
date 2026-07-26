@@ -1,8 +1,11 @@
 import { Router } from 'express';
-import fetch from 'node-fetch';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
 
-export function createIngestRouter(): Router {
+export function createIngestRouter(uploadDir: string): Router {
   const router = Router();
+  const upload = multer({ dest: uploadDir });
 
   const FALLBACK_TEXT = 'Recent international business and technology news topics for TOEIC exam generation.';
 
@@ -95,8 +98,34 @@ export function createIngestRouter(): Router {
   });
 
   // PDF ingestion
-  router.post('/api/ingest/pdf', (req, res) => {
-    res.json({ text: FALLBACK_TEXT, source: 'fallback' });
+  router.post('/api/ingest/pdf', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ error: 'No PDF file uploaded.' });
+        return;
+      }
+      const pdfPath = req.file.path;
+      try {
+        const pdfParse = (await import('pdf-parse')).default;
+        const buffer = fs.readFileSync(pdfPath);
+        const data = await pdfParse(buffer);
+        const text = (data.text || '').trim();
+        if (text.length > 50) {
+          res.json({ text: text.slice(0, 10000), source: 'pdf-parse' });
+          return;
+        }
+        console.warn('[PDF] Extracted text too short, using fallback');
+        res.json({ text: FALLBACK_TEXT, source: 'fallback', warning: 'Extracted text too short' });
+      } catch (pdfErr) {
+        const msg = pdfErr instanceof Error ? pdfErr.message : String(pdfErr);
+        console.error('[PDF] Extraction failed:', msg);
+        res.json({ text: FALLBACK_TEXT, source: 'fallback', warning: msg });
+      } finally {
+        try { fs.unlinkSync(pdfPath); } catch { /* temp file cleanup */ }
+      }
+    } catch {
+      res.json({ text: FALLBACK_TEXT, source: 'fallback' });
+    }
   });
 
   return router;
