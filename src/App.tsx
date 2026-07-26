@@ -4,33 +4,8 @@ import type { AIConfig } from './Dashboard';
 import Exam from './Exam';
 import axios from 'axios';
 import { X } from 'lucide-react';
-
-// Types from Exam.tsx
-interface Question {
-  id: number;
-  part: number;
-  type: 'listening' | 'reading';
-  answer: string;
-  options: string[];
-  image?: string;
-  audio?: string;
-  question?: string;
-  context?: string;
-  passage?: string;
-}
-
-interface ExamData {
-  title: string;
-  questions: Question[];
-  listeningTime?: number;
-  readingTime?: number;
-}
-
-interface Status {
-  phase: 'starting' | 'generating' | 'audio' | 'completed' | 'error';
-  progress: number;
-  message: string;
-}
+import type { ExamData, Status } from './types/exam';
+import ErrorBoundary from './ErrorBoundary';
 
 const App: React.FC = () => {
     const [examData, setExamData] = useState<ExamData | null>(null);
@@ -101,9 +76,9 @@ const App: React.FC = () => {
         setSessionId(null);
         setError(null);
         
-        // FINAL FRONTEND GUARD: Block network request if API Key is empty or too short
-                // Allow mock mode (keys containing "test")
-                if (config.aiSource !== 'ollama' && !config.apiKey.toLowerCase().includes('test')) {
+                // FINAL FRONTEND GUARD: Block network request if API Key is empty or too short
+                // Allow mock mode (exact "test" key only)
+                if (config.aiSource !== 'ollama' && config.apiKey.toLowerCase() !== 'test') {
                     if (!config.apiKey.trim()) {
                         setError("No API Key provided. Please enter your API Key in Settings.");
                         setLoading(false);
@@ -221,19 +196,23 @@ const App: React.FC = () => {
                             </div>
                         </div>
                     )}
-                    <Dashboard onStart={startExam} onReview={loadSession} onClearError={() => setError(null)} />
+                    <ErrorBoundary>
+                        <Dashboard onStart={startExam} onReview={loadSession} onClearError={() => setError(null)} />
+                    </ErrorBoundary>
                 </div>
             ) : (
                 examData && (
-                    <Exam 
-                        data={examData} 
-                        onBack={() => {
-                            setLoading(false);
-                            setSessionId(null);
-                            setView('dashboard');
-                            setExamData(null);
-                        }} 
-                    />
+                    <ErrorBoundary>
+                        <Exam 
+                            data={examData} 
+                            onBack={() => {
+                                setLoading(false);
+                                setSessionId(null);
+                                setView('dashboard');
+                                setExamData(null);
+                            }} 
+                        />
+                    </ErrorBoundary>
                 )
             )}
         </div>

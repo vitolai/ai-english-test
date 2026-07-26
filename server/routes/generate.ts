@@ -119,7 +119,7 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
       try {
         let finalQuestions: Array<Record<string, unknown>> = [];
 
-        const isTestMode = apiKey && apiKey.toLowerCase().includes('test');
+        const isTestMode = apiKey && apiKey.toLowerCase() === 'test';
 
         if (isTestMode) {
           console.log('[Mock] Test mode triggered — generating mock data');

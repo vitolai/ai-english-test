@@ -1,27 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle2, Trophy, ArrowLeft, Headphones, BookOpen, CheckSquare, Volume2, Printer } from 'lucide-react';
-
-interface Question {
-  id: number;
-  part: number;
-  type: 'listening' | 'reading';
-  answer: string;
-  options: string[];
-  image?: string;
-  audio?: string;
-  question?: string;
-  context?: string;
-  passage?: string;
-  transcript?: string;
-}
+import type { Question, ExamData } from './types/exam';
 
 interface ExamProps {
-  data: {
-    title: string;
-    questions: Question[];
-    listeningTime?: number;
-    readingTime?: number;
-  };
+  data: ExamData;
   onBack: () => void;
 }
 

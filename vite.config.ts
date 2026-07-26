@@ -10,7 +10,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     fs: {
-      strict: false,
+      strict: true,
     },
     proxy: {
       '/api': {

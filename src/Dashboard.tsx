@@ -63,7 +63,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
   const [modelId, setModelId] = useState<string>(savedConfig?.modelId || 'nvidia/nemotron-3-super-120b-a12b:free');
   const [customModel, setCustomModel] = useState('');
   const [apiUrl, setApiUrl] = useState(savedConfig?.apiUrl || '');
-  const [apiKey, setApiKey] = useState(savedConfig?.apiKey || '');
+  const [apiKey, setApiKey] = useState(() => {
+    try {
+      // Try sessionStorage first (API keys), fall back to legacy localStorage
+      const sessionKey = sessionStorage.getItem('toeic_ai_session_key') || '';
+      if (sessionKey) return sessionKey;
+      const legacyKey = localStorage.getItem(`toeic_api_key_openrouter`) || savedConfig?.apiKey || '';
+      if (legacyKey) {
+        sessionStorage.setItem('toeic_ai_session_key', legacyKey);
+        return legacyKey;
+      }
+      return savedConfig?.apiKey || '';
+    } catch { return savedConfig?.apiKey || ''; }
+  });
   const [showApiKey, setShowApiKey] = useState(false);
 
   // Computed values from providers.ts — filter out hidden providers
@@ -164,16 +176,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
     const finalApiUrl = apiUrl || defaultUrls[providerId] || '';
     const finalModel = modelId === 'custom' ? customModel : modelId;
 
-    // Persist to localStorage so next visit auto-fills
+    // Persist config to localStorage so next visit auto-fills
     try {
       localStorage.setItem('toeic_ai_config', JSON.stringify({
         providerId,
         modelId,
         apiUrl: finalApiUrl,
-        apiKey,
+        apiKey: '',
       }));
-      // Persist API key per-provider for restoration on switch
-      localStorage.setItem(`toeic_api_key_${providerId}`, apiKey);
+      // Known limitation: API keys use sessionStorage (cleared when browser closes).
+      // Not truly secure — a local-only app trade-off for now.
+      sessionStorage.setItem(`toeic_api_key_${providerId}`, apiKey);
+      sessionStorage.setItem('toeic_ai_session_key', apiKey);
     } catch { /* ignore */ }
 
     const config: AIConfig = {
@@ -196,9 +210,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
     if (currentProvider) {
       setModelId(defaultModels[providerId] || currentProvider.models[0]?.id || '');
       setApiUrl(defaultUrls[providerId] || '');
-      // Restore per-provider API key
+      // Restore per-provider API key from sessionStorage
       try {
-        const saved = localStorage.getItem(`toeic_api_key_${providerId}`) || '';
+        const saved = sessionStorage.getItem(`toeic_api_key_${providerId}`) || '';
         setApiKey(saved);
       } catch { setApiKey(''); }
     }
