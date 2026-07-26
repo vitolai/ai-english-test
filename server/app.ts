@@ -91,8 +91,34 @@ app.use(createGenerateRouter(stores, STORAGE_DIR));
 app.use(createIngestRouter(UPLOAD_DIR));
 
 // ============================================================
-// SSE STREAMING ENDPOINT
+// SSE STREAMING ENDPOINT + HEARTBEAT
 // ============================================================
+
+// SSE clients are in-memory only (lost on server restart).
+// Client-side reconnect logic handles restarts: if no message
+// received in 60s, the client automatically reconnects.
+// See src/App.tsx EventSource reconnect implementation.
+const SSE_HEARTBEAT_MS = 30_000;
+let sseHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
+
+function startSseHeartbeat() {
+  if (sseHeartbeatTimer) return;
+  sseHeartbeatTimer = setInterval(() => {
+    for (const [sessionId, client] of sseClients) {
+      if (client.destroyed) {
+        sseClients.delete(sessionId);
+        continue;
+      }
+      try {
+        client.write(`: ping\n\n`);
+      } catch {
+        sseClients.delete(sessionId);
+      }
+    }
+  }, SSE_HEARTBEAT_MS);
+}
+
+startSseHeartbeat();
 
 app.get('/api/events/:sessionId', (req: Request, res: Response) => {
   const sessionId = req.params.sessionId as string;

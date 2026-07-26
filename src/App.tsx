@@ -44,31 +44,74 @@ const App: React.FC = () => {
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
-        let interval: ReturnType<typeof setInterval>;
+        // SSE with reconnect: if no message received in 60s, reconnect.
+        // Server sends :ping heartbeat every 30s; 60s timeout covers
+        // missed heartbeats + minor network hiccups.
+        let eventSource: EventSource | null = null;
+        let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+        let lastMessageAt = Date.now();
+
         if (loading && sessionId) {
-            interval = setInterval(async () => {
-                try {
-                    const res = await axios.get(`${API_BASE}/api/status/${sessionId}`);
-                    setStatus(res.data);
-                    
-                    if (res.data.phase === 'completed') {
-                        clearInterval(interval);
-                        loadSession(sessionId);
-                    }
-                    // BUGFIX: If server reports error, stop polling and unblock the UI
-                    if (res.data.phase === 'error') {
-                        clearInterval(interval);
-                        setError(res.data.message || 'Generation failed. Please check your settings and try again.');
-                        setLoading(false);
-                        setSessionId(null);
-                    }
-                } catch (err: unknown) {
-                            console.error('Status poll error', err);
+            const connect = () => {
+                lastMessageAt = Date.now();
+                eventSource = new EventSource(`${API_BASE}/api/events/${sessionId}`);
+
+                eventSource.onmessage = (ev) => {
+                    lastMessageAt = Date.now();
+                    try {
+                        const data = JSON.parse(ev.data) as { type?: string; phase?: string; progress?: number; message?: string; session_id?: string; data?: ExamData };
+                        if (data.type === 'progress' && data.phase) {
+                            setStatus({ phase: data.phase, progress: data.progress ?? 0, message: data.message ?? '' });
+                            if (data.phase === 'completed') {
+                                eventSource?.close();
+                                loadSession(sessionId);
+                                return;
+                            }
+                            if (data.phase === 'error') {
+                                eventSource?.close();
+                                setError(data.message || 'Generation failed. Please check your settings and try again.');
+                                setLoading(false);
+                                setSessionId(null);
+                                return;
+                            }
                         }
-            }, 1500);
+                        if (data.type === 'complete' && data.session_id) {
+                            eventSource?.close();
+                            loadSession(data.session_id);
+                        }
+                        if (data.type === 'error') {
+                            eventSource?.close();
+                            setError(data.message || 'Generation failed.');
+                            setLoading(false);
+                            setSessionId(null);
+                        }
+                    } catch { /* ignore malformed events */ }
+                };
+
+                eventSource.onerror = () => {
+                    // SSE reconnect logic: if no message in 60s, force reconnect.
+                    // Otherwise, let the browser's built-in SSE reconnection handle it.
+                };
+            };
+
+            connect();
+
+            // Watchdog: if no message in 60s, close and reconnect
+            const watchdog = setInterval(() => {
+                if (Date.now() - lastMessageAt > 60_000) {
+                    eventSource?.close();
+                    lastMessageAt = Date.now();
+                    reconnectTimer = setTimeout(connect, 1000);
+                }
+            }, 10_000);
+
+            return () => {
+                clearInterval(watchdog);
+                if (reconnectTimer) clearTimeout(reconnectTimer);
+                eventSource?.close();
+            };
         }
-        return () => clearInterval(interval);
-    }, [loading, sessionId]);
+    }, [loading, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const startExam = async (count: number, source: string, payload: File | string | null, config: AIConfig, maxStorage?: number) => {
         console.log('App: startExam triggered', { count, source, hasPayload: !!payload });

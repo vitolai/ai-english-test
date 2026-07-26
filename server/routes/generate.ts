@@ -66,14 +66,29 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
       return;
     }
 
-    const { seedText, questionCount, model, apiKey, config, sourceType } = req.body as {
+    const { seedText, questionCount, model, apiKey, config, sourceType, mode } = req.body as {
       seedText?: string;
       questionCount: number;
       model?: string;
       apiKey?: string;
       config?: { providerId?: string; baseURL?: string; fallbacks?: Array<{ id: string; model: string; apiKey: string; baseURL?: string }> };
       sourceType?: string;
+      mode?: 'mock' | 'real';
     };
+
+    // Input validation: questionCount must be between 10 and 200
+    if (!Number.isInteger(questionCount) || questionCount < 10 || questionCount > 200) {
+      res.status(400).json({ error: 'questionCount must be an integer between 10 and 200.' });
+      return;
+    }
+
+    // Sanitize seedText: strip HTML tags, limit to 2000 chars
+    const sanitizedSeedText = (seedText || '')
+      .replace(/<[^>]+>/g, '')
+      .slice(0, 2000);
+
+    // Explicit mock mode: check mode field first, then fallback to apiKey='test' detection
+    const isMock = mode === 'mock' || (mode === undefined && apiKey && apiKey.toLowerCase() === 'test');
 
     const session_id = `${new Date().toISOString().split('T')[0]}-${uuidv4().slice(0, 8)}`;
     const sessionDir = path.join(storageDir, session_id);
@@ -91,7 +106,7 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
     res.json({ session_id });
 
     runBackgroundGenerate(session_id, sessionDir, audioDir, skeletonPath, {
-      seedText, questionCount, model, apiKey, config, sourceType,
+      seedText: sanitizedSeedText, questionCount, model, apiKey, config, sourceType, isMock,
     }).catch(err => {
       console.error('[Background] Unhandled error:', err);
     });
@@ -109,19 +124,18 @@ export function createGenerateRouter(stores: SessionStores, storageDir: string):
       apiKey?: string;
       config?: { providerId?: string; baseURL?: string; fallbacks?: Array<{ id: string; model: string; apiKey: string; baseURL?: string }> };
       sourceType?: string;
+      isMock?: boolean;
     },
   ) {
-    const { seedText, questionCount, model, apiKey, config, sourceType } = params;
+    const { seedText, questionCount, model, apiKey, config, sourceType, isMock } = params;
     const maxValidationRetries = 5;
 
     for (let validationAttempt = 1; validationAttempt <= maxValidationRetries; validationAttempt++) {
       try {
         let finalQuestions: Array<Record<string, unknown>> = [];
 
-        const isTestMode = apiKey && apiKey.toLowerCase() === 'test';
-
-        if (isTestMode) {
-          console.log('[Mock] Test mode triggered — generating mock data');
+        if (isMock) {
+          console.log('[Mock] Mock mode triggered — generating mock data');
           setStatus(session_id, { phase: 'generating', progress: 50, message: 'Mock mode: generating sample data...' });
           finalQuestions = generateMockData(questionCount, session_id).questions as Array<Record<string, unknown>>;
         } else {

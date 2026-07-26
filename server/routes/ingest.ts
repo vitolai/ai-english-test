@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
@@ -9,8 +10,30 @@ export function createIngestRouter(uploadDir: string): Router {
 
   const FALLBACK_TEXT = 'Recent international business and technology news topics for TOEIC exam generation.';
 
+  // Rate limiter: max 5 requests per minute per IP (same as /api/generate)
+  const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+  const RATE_LIMIT_MAX = 5;
+  const RATE_LIMIT_WINDOW_MS = 60_000;
+
+  function ingestRateLimit(req: Request, res: Response, next: NextFunction) {
+    const ip = (req.ip || req.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now > entry.resetAt) {
+      rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+      next();
+      return;
+    }
+    entry.count++;
+    if (entry.count > RATE_LIMIT_MAX) {
+      res.status(429).json({ error: 'Rate limit exceeded. Max 5 ingest requests per minute.' });
+      return;
+    }
+    next();
+  }
+
   // Web ingestion via Firecrawl (free tier, no API key needed)
-  router.post('/api/ingest/web', async (req, res) => {
+  router.post('/api/ingest/web', ingestRateLimit, async (req, res) => {
     try {
       const { url } = req.body as { url?: string };
       if (!url) {
@@ -98,7 +121,7 @@ export function createIngestRouter(uploadDir: string): Router {
   });
 
   // PDF ingestion
-  router.post('/api/ingest/pdf', upload.single('file'), async (req, res) => {
+  router.post('/api/ingest/pdf', ingestRateLimit, upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         res.status(400).json({ error: 'No PDF file uploaded.' });
