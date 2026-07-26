@@ -11,3 +11,6 @@ test-results/
 *.bak
 *.bak_*
 tests/e2e_webwright/final_runs/
+
+# Opencode Commander (automation, not part of this project)
+opencode_commander/

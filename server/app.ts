@@ -213,8 +213,10 @@ app.get('/api/health/providers', async (_req: Request, res: Response) => {
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
+          const envKey = PROVIDER_ENV_KEYS[p.id] || 'test';
+          const _apiKey = process.env[envKey] || '';
         const response = await fetch(p.baseURL + '/models', {
-          headers: { Authorization: 'Bearer ' + (process.env[PROVIDER_ENV_KEYS[p.id] || 'test') },
+          headers: { Authorization: 'Bearer ' + _apiKey },
           signal: controller.signal,
         });
         clearTimeout(timeout);
