@@ -128,7 +128,9 @@ const QuestionCard: React.FC<{
   playingAudioId: number | null;
   setPlayingAudioId: (id: number | null) => void;
   allQuestions: Question[];
-}> = ({ q, index, answer, onAnswer, playingAudioId, setPlayingAudioId, allQuestions }) => {
+  groupAudioPlayed: boolean;
+  onGroupAudioPlayed: (audioFile: string) => void;
+}> = ({ q, index, answer, onAnswer, playingAudioId, setPlayingAudioId, allQuestions, groupAudioPlayed, onGroupAudioPlayed }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const isPart1 = q.type === 'listening' && q.part === 1;
   const isPart2 = q.type === 'listening' && q.part === 2;
@@ -160,6 +162,16 @@ const QuestionCard: React.FC<{
       }
     }
   };
+
+  // For P3/P4: auto-play on first question of group when not yet played
+  useEffect(() => {
+    if (isListeningPart34 && q.audio && !groupAudioPlayed && playingAudioId !== q.id) {
+      const timer = setTimeout(() => {
+        audioRef.current?.play().catch(() => {});
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isListeningPart34, q.audio, groupAudioPlayed, playingAudioId, q.id]);
 
   return (
     <div id={`q-${q.id}`} className="group relative bg-white rounded-[2rem] shadow-sm border border-slate-100 p-8 lg:p-12 mb-12 transition-all hover:shadow-xl hover:border-blue-100">
@@ -267,13 +279,16 @@ const QuestionCard: React.FC<{
           </div>
           <div className="flex-1 text-center">
             <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">
-              {isActive ? 'Playing...' : 'Tap to Play Conversation/Talk & Question'}
+              {isActive ? 'Playing...' : groupAudioPlayed ? 'Audio played for this group' : 'Tap to Play Conversation/Talk & Question'}
             </p>
             <p className="text-xs text-slate-500">Then answer the question below</p>
           </div>
           <audio 
             ref={audioRef}
-            onPlay={() => setPlayingAudioId(q.id)}
+            onPlay={() => {
+              setPlayingAudioId(q.id);
+              onGroupAudioPlayed(q.audio!);
+            }}
             onPause={() => setPlayingAudioId(null)}
             onEnded={() => setPlayingAudioId(null)}
             className="hidden" 
@@ -352,15 +367,20 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
   const [currentSection, setCurrentSection] = useState<'listening' | 'reading'>('listening');
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [listeningTimeLeft, setListeningTimeLeft] = useState((data.listeningTime || 600) / timerDivisor);
-  const [readingTimeLeft, setReadingTimeLeft] = useState((data.readingTime || 600) / timerDivisor);
+  const [readingTimeLeft, setReadingTimeLeft] = useState((data.readingTime || 3600) / timerDivisor);
   const [isFinished, setIsFinished] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<number | null>(null);
   const [listeningExpired, setListeningExpired] = useState(false);
   const [listeningLocked, setListeningLocked] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [playedAudioFiles, setPlayedAudioFiles] = useState<Set<string>>(new Set());
 
-  const listeningQs = data.questions ? data.questions.filter(q => q.type === 'listening') : [];
-  const readingQs = data.questions ? data.questions.filter(q => q.type === 'reading') : [];
+  const listeningQs = data.questions
+    ? data.questions.filter(q => q.type === 'listening').sort((a, b) => a.part - b.part || a.id - b.id)
+    : [];
+  const readingQs = data.questions
+    ? data.questions.filter(q => q.type === 'reading').sort((a, b) => a.part - b.part || a.id - b.id)
+    : [];
   const effectiveSection = listeningLocked ? 'reading' : currentSection;
   const currentQs = effectiveSection === 'listening' ? listeningQs : readingQs;
 
@@ -399,6 +419,34 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
       setIsFinished(true);
     }
   }, [readingTimeLeft, isFinished, currentSection]);
+
+  // Auto-advance for P3/P4 groups: after audio ends, give user 10s then scroll to next question in group
+  useEffect(() => {
+    if (!playingAudioId || isFinished) return;
+    const q = currentQs.find(qq => qq.id === playingAudioId);
+    if (!q || (q.part !== 3 && q.part !== 4) || q.type !== 'listening') return;
+    if (!q.audio) return;
+
+    const audioEl = document.querySelector(`audio[src*="${q.audio}"]`) as HTMLAudioElement | null;
+    if (!audioEl) return;
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const onEnded = () => {
+      const idx = currentQs.findIndex(qq => qq.id === q.id);
+      const next = currentQs[idx + 1];
+      if (next && next.part === q.part && next.type === q.type && next.audio === q.audio) {
+        timer = setTimeout(() => {
+          const el = document.getElementById(`q-${next.id}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 10000);
+      }
+    };
+    audioEl.addEventListener('ended', onEnded);
+    return () => {
+      audioEl.removeEventListener('ended', onEnded);
+      if (timer) clearTimeout(timer);
+    };
+  }, [playingAudioId, isFinished, currentQs]);
 
   const handleAnswer = (qid: number, option: string) => {
     setUserAnswers(prev => ({ ...prev, [qid]: option }));
@@ -613,18 +661,29 @@ const Exam: React.FC<ExamProps> = ({ data, onBack }) => {
           </div>
 
           <div className="space-y-12">
-            {currentQs.map((q, idx) => (
-              <QuestionCard 
-                key={q.id}
-                q={q}
-                index={effectiveSection === 'listening' ? idx : listeningQs.length + idx}
-                answer={userAnswers[q.id]}
-                onAnswer={handleAnswer}
-                playingAudioId={playingAudioId}
-                setPlayingAudioId={setPlayingAudioId}
-                allQuestions={data.questions}
-              />
-            ))}
+            {currentQs.map((q, idx) => {
+              const qGroupAudioPlayed = q.audio ? playedAudioFiles.has(q.audio) : false;
+              return (
+                <QuestionCard 
+                  key={q.id}
+                  q={q}
+                  index={effectiveSection === 'listening' ? idx : listeningQs.length + idx}
+                  answer={userAnswers[q.id]}
+                  onAnswer={handleAnswer}
+                  playingAudioId={playingAudioId}
+                  setPlayingAudioId={setPlayingAudioId}
+                  allQuestions={data.questions}
+                  groupAudioPlayed={qGroupAudioPlayed}
+                  onGroupAudioPlayed={(audioFile) => {
+                    setPlayedAudioFiles(prev => {
+                      const next = new Set(prev);
+                      next.add(audioFile);
+                      return next;
+                    });
+                  }}
+                />
+              );
+            })}
           </div>
 
           {/* Transition Buttons */}
