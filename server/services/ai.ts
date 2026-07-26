@@ -810,25 +810,24 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
     }
 
     if (type === 'listening' && part === 3) {
-      const hasTranscript = q['transcript'] && (q['transcript'] as string).trim() !== '';
-      if (!hasTranscript) {
-        // Track usage: after 3 questions assigned to the current transcript,
-        // move to the next. Cycle through available mock transcripts.
-        if (p3UsageCount >= 3) {
-          p3UsageCount = 0;
-          p3TranscriptIdx = (p3TranscriptIdx + 1) % MOCK_PART3_CONVERSATIONS.length;
-        }
-        const mockConv = MOCK_PART3_CONVERSATIONS[p3TranscriptIdx];
-        const qInGroup = Math.min(p3UsageCount, mockConv.questions.length - 1);
-        const mockQ = mockConv.questions[qInGroup];
-        q['transcript'] = mockConv.transcript;
-        q['question'] = mockQ.question;
-        // FR-GEN-13: shuffle options and set answer to shuffled position
-        const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
-        q['options'] = shuffled.options;
-        q['answer'] = shuffled.answer;
-        p3UsageCount++;
+      // Always force mock transcript grouping for P3 (max 3 per conversation).
+      // AI-generated transcripts leak through, so we cannot rely on hasTranscript.
+      // Track usage: after 3 questions assigned to the current transcript,
+      // move to the next. Cycle through available mock transcripts.
+      if (p3UsageCount >= 3) {
+        p3UsageCount = 0;
+        p3TranscriptIdx = (p3TranscriptIdx + 1) % MOCK_PART3_CONVERSATIONS.length;
       }
+      const mockConv = MOCK_PART3_CONVERSATIONS[p3TranscriptIdx];
+      const qInGroup = Math.min(p3UsageCount, mockConv.questions.length - 1);
+      const mockQ = mockConv.questions[qInGroup];
+      q['transcript'] = mockConv.transcript;
+      q['question'] = mockQ.question;
+      // FR-GEN-13: shuffle options and set answer to shuffled position
+      const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
+      q['options'] = shuffled.options;
+      q['answer'] = shuffled.answer;
+      p3UsageCount++;
     }
 
     if (type === 'listening' && part === 4) {
