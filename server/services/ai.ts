@@ -775,23 +775,15 @@ function assignNonAdjacentGroups<T>(pool: readonly T[], numGroups: number): T[] 
 export function ensureListeningCoherence(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
   if (!questions || questions.length === 0) return questions;
 
-  // Count P3 and P4 questions to build group assignments
-  let p3Count = 0;
-  let p4Count = 0;
-  for (const q of questions) {
-    if (q['type'] === 'listening' && q['part'] === 3) p3Count++;
-    if (q['type'] === 'listening' && q['part'] === 4) p4Count++;
-  }
-
-  // Pre-compute group assignments: each group of 3 questions gets a
-  // different mock entry, and no two adjacent groups share the same entry.
-  const numP3Groups = Math.ceil(p3Count / 3);
-  const p3GroupMocks = assignNonAdjacentGroups(MOCK_PART3_CONVERSATIONS, numP3Groups);
-  const numP4Groups = Math.ceil(p4Count / 3);
-  const p4GroupMocks = assignNonAdjacentGroups(MOCK_PART4_TALKS, numP4Groups);
-
-  let p3GroupIdx = 0;
-  let p4GroupIdx = 0;
+  // Deterministic grouping for P3/P4: max 3 questions share the same
+  // transcript. Track usage count per transcript index. When 3 questions
+  // have been assigned to the current transcript, increment to the next.
+  // Q1-3 get transcript 0, Q4-6 get transcript 1, etc. Cycle through
+  // available mock transcripts if more groups are needed.
+  let p3TranscriptIdx = 0;
+  let p3UsageCount = 0;
+  let p4TranscriptIdx = 0;
+  let p4UsageCount = 0;
 
   return questions.map(q => {
     const part = q['part'] as number;
@@ -818,31 +810,47 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
     }
 
     if (type === 'listening' && part === 3) {
-      const groupIdx = Math.floor(p3GroupIdx / 3);
-      const mockConv = p3GroupMocks[groupIdx];
-      const qInGroup = p3GroupIdx % 3;
-      const mockQ = mockConv.questions[qInGroup];
-      q['transcript'] = mockConv.transcript;
-      q['question'] = mockQ.question;
-      // FR-GEN-13: shuffle options and set answer to shuffled position
-      const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
-      q['options'] = shuffled.options;
-      q['answer'] = shuffled.answer;
-      p3GroupIdx++;
+      const hasTranscript = q['transcript'] && (q['transcript'] as string).trim() !== '';
+      if (!hasTranscript) {
+        // Track usage: after 3 questions assigned to the current transcript,
+        // move to the next. Cycle through available mock transcripts.
+        if (p3UsageCount >= 3) {
+          p3UsageCount = 0;
+          p3TranscriptIdx = (p3TranscriptIdx + 1) % MOCK_PART3_CONVERSATIONS.length;
+        }
+        const mockConv = MOCK_PART3_CONVERSATIONS[p3TranscriptIdx];
+        const qInGroup = Math.min(p3UsageCount, mockConv.questions.length - 1);
+        const mockQ = mockConv.questions[qInGroup];
+        q['transcript'] = mockConv.transcript;
+        q['question'] = mockQ.question;
+        // FR-GEN-13: shuffle options and set answer to shuffled position
+        const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
+        q['options'] = shuffled.options;
+        q['answer'] = shuffled.answer;
+        p3UsageCount++;
+      }
     }
 
     if (type === 'listening' && part === 4) {
-      const groupIdx = Math.floor(p4GroupIdx / 3);
-      const mockTalk = p4GroupMocks[groupIdx];
-      const qInGroup = p4GroupIdx % 3;
-      const mockQ = mockTalk.questions[qInGroup];
-      q['transcript'] = mockTalk.transcript;
-      q['question'] = mockQ.question;
-      // FR-GEN-13: shuffle options and set answer to shuffled position
-      const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
-      q['options'] = shuffled.options;
-      q['answer'] = shuffled.answer;
-      p4GroupIdx++;
+      const hasTranscript = q['transcript'] && (q['transcript'] as string).trim() !== '';
+      if (!hasTranscript) {
+        // Track usage: after 3 questions assigned to the current talk transcript,
+        // move to the next. Cycle through available mock transcripts.
+        if (p4UsageCount >= 3) {
+          p4UsageCount = 0;
+          p4TranscriptIdx = (p4TranscriptIdx + 1) % MOCK_PART4_TALKS.length;
+        }
+        const mockTalk = MOCK_PART4_TALKS[p4TranscriptIdx];
+        const qInGroup = Math.min(p4UsageCount, mockTalk.questions.length - 1);
+        const mockQ = mockTalk.questions[qInGroup];
+        q['transcript'] = mockTalk.transcript;
+        q['question'] = mockQ.question;
+        // FR-GEN-13: shuffle options and set answer to shuffled position
+        const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
+        q['options'] = shuffled.options;
+        q['answer'] = shuffled.answer;
+        p4UsageCount++;
+      }
     }
 
     return q;
@@ -2618,6 +2626,46 @@ const MOCK_PART3_CONVERSATIONS: { transcript: string; questions: { question: str
       { question: "What did HR approve?", options: ["The salary range", "The hiring plan", "The budget cut", "The new office"], answer: "A" },
     ],
   },
+  {
+    transcript: "Michael: Have you booked the venue for the corporate event? Jennifer: Yes, the Downtown Convention Center is reserved for Saturday. Michael: How many attendees are expected? Jennifer: Around 150 people so far.",
+    questions: [
+      { question: "Where is the event being held?", options: ["Downtown Convention Center", "The hotel ballroom", "The park pavilion", "The office rooftop"], answer: "A" },
+      { question: "When is the event?", options: ["Saturday", "Sunday", "Friday", "Next week"], answer: "A" },
+      { question: "How many people are expected?", options: ["Around 150", "Around 50", "Around 300", "Around 75"], answer: "A" },
+    ],
+  },
+  {
+    transcript: "Jennifer: The architect sent the revised blueprints this morning. Michael: Did they address the concerns about the parking garage? Jennifer: Yes, they added two more levels. Michael: Great. Let's review them before the board meeting.",
+    questions: [
+      { question: "What was revised?", options: ["The blueprints", "The budget", "The timeline", "The contract"], answer: "A" },
+      { question: "What was changed about the garage?", options: ["Two more levels added", "It was removed", "It was relocated", "It was downsized"], answer: "A" },
+      { question: "What will they do with the blueprints?", options: ["Review before the board meeting", "Send to the client", "File with the city", "Share with contractors"], answer: "A" },
+    ],
+  },
+  {
+    transcript: "Michael: I just got back from the trade show in Chicago. Jennifer: How did it go? Michael: We generated over 200 leads. Jennifer: That's impressive. Did you meet with the key distributors?",
+    questions: [
+      { question: "Where was the trade show?", options: ["Chicago", "New York", "Los Angeles", "Houston"], answer: "A" },
+      { question: "How many leads were generated?", options: ["Over 200", "Over 50", "Over 500", "Over 100"], answer: "A" },
+      { question: "What does the woman ask about?", options: ["Key distributors", "The budget", "Travel expenses", "The booth design"], answer: "A" },
+    ],
+  },
+  {
+    transcript: "Jennifer: The building maintenance crew found a leak on the third floor. Michael: Is it near the server room? Jennifer: No, it's in the east wing near the break room. Michael: Okay, let's make sure the electrical panels aren't affected.",
+    questions: [
+      { question: "Where is the leak?", options: ["East wing near the break room", "Near the server room", "On the ground floor", "In the parking garage"], answer: "A" },
+      { question: "What is the man concerned about?", options: ["Electrical panels being affected", "Water damage to files", "Mold in the walls", "Ceiling tiles falling"], answer: "A" },
+      { question: "Who found the leak?", options: ["Building maintenance crew", "The cleaning staff", "An inspector", "A tenant"], answer: "A" },
+    ],
+  },
+  {
+    transcript: "Michael: The supplier raised their prices by 12% this quarter. Jennifer: That's significant. Have we explored alternative vendors? Michael: I've contacted three others for quotes. Jennifer: Good. Let's compare by end of week.",
+    questions: [
+      { question: "How much did prices increase?", options: ["12%", "8%", "20%", "5%"], answer: "A" },
+      { question: "How many alternative vendors were contacted?", options: ["Three", "Two", "Five", "One"], answer: "A" },
+      { question: "When should the comparison be done?", options: ["By end of week", "By end of month", "Next Monday", "Tomorrow"], answer: "A" },
+    ],
+  },
 ];
 
 // FR-GEN-13: Shuffle MOCK_PART3_CONVERSATIONS options at init so answers aren't always the same position
@@ -2693,6 +2741,22 @@ const MOCK_PART4_TALKS: { transcript: string; questions: { question: string; opt
       { question: "When does the new system start?", options: ["Next month", "Next week", "Today", "Next quarter"], answer: "A" },
       { question: "What happens to the old system?", options: ["Deactivated", "Kept as backup", "Upgraded", "Merged with new"], answer: "A" },
       { question: "Where can employees get help?", options: ["HR", "IT", "Finance", "Manager"], answer: "A" },
+    ],
+  },
+  {
+    transcript: "Good afternoon. This is a reminder that the annual performance review submissions are due by Friday at 5 PM. Please complete your self-assessment through the employee portal. Managers should schedule one-on-one review meetings with each direct report before the end of the month.",
+    questions: [
+      { question: "When are performance reviews due?", options: ["Friday at 5 PM", "End of month", "Next Monday", "Today"], answer: "A" },
+      { question: "Where should self-assessments be completed?", options: ["Employee portal", "Paper form", "Email to HR", "Manager's office"], answer: "A" },
+      { question: "What should managers do?", options: ["Schedule one-on-one meetings", "Submit team reviews", "Hire new staff", "Update budgets"], answer: "A" },
+    ],
+  },
+  {
+    transcript: "Attention all staff. The parking garage will undergo maintenance this Saturday from 7 AM to 6 PM. During this time, the lower level will be closed. Please use the visitor lot or street parking. We apologize for the inconvenience and thank you for your patience.",
+    questions: [
+      { question: "When is the maintenance scheduled?", options: ["Saturday 7 AM to 6 PM", "Sunday all day", "Friday evening", "Next week"], answer: "A" },
+      { question: "Which area will be closed?", options: ["Lower level", "Upper level", "Entire garage", "Visitor lot"], answer: "A" },
+      { question: "Where can employees park instead?", options: ["Visitor lot or street parking", "Rooftop deck", "Adjacent building", "Reserved spots only"], answer: "A" },
     ],
   },
 ];
