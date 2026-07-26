@@ -121,7 +121,8 @@ const App: React.FC = () => {
         
                 // FINAL FRONTEND GUARD: Block network request if API Key is empty or too short
                 // Allow mock mode (exact "test" key only)
-                if (config.aiSource !== 'ollama' && config.apiKey.toLowerCase() !== 'test') {
+                const isExplicitMock = config.apiKey === 'test';
+                if (config.aiSource !== 'ollama' && !isExplicitMock) {
                     if (!config.apiKey.trim()) {
                         setError("No API Key provided. Please enter your API Key in Settings.");
                         setLoading(false);
@@ -167,7 +168,8 @@ const App: React.FC = () => {
                                 baseURL: config.apiUrl 
                             },
                             maxStorage,
-                            sourceType: source
+                            sourceType: source,
+                            mode: isExplicitMock ? 'mock' : 'real'
                         });
             
             console.log('App: Generation started', res.data);
