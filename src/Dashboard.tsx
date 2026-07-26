@@ -53,11 +53,31 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Provider & Model State — load from localStorage on first render
+  // Clean up any legacy API keys from localStorage on mount (keys belong in sessionStorage only)
   const savedConfig = useMemo(() => {
     try {
       const raw = localStorage.getItem('toeic_ai_config');
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      // Strip apiKey from persisted config — never store keys in localStorage
+      if (parsed && typeof parsed === 'object' && 'apiKey' in parsed) {
+        delete parsed.apiKey;
+        localStorage.setItem('toeic_ai_config', JSON.stringify(parsed));
+      }
+      return parsed;
     } catch { return null; }
+  }, []);
+
+  useEffect(() => {
+    try {
+      // Remove any legacy API keys from localStorage
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('toeic_api_key_')) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch { /* ignore */ }
   }, []);
   const [providerId, setProviderId] = useState<string>(savedConfig?.providerId || 'openrouter');
   const [modelId, setModelId] = useState<string>(savedConfig?.modelId || 'nvidia/nemotron-3-super-120b-a12b:free');
@@ -65,16 +85,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
   const [apiUrl, setApiUrl] = useState(savedConfig?.apiUrl || '');
   const [apiKey, setApiKey] = useState(() => {
     try {
-      // Try sessionStorage first (API keys), fall back to legacy localStorage
-      const sessionKey = sessionStorage.getItem('toeic_ai_session_key') || '';
-      if (sessionKey) return sessionKey;
-      const legacyKey = localStorage.getItem(`toeic_api_key_openrouter`) || savedConfig?.apiKey || '';
-      if (legacyKey) {
-        sessionStorage.setItem('toeic_ai_session_key', legacyKey);
-        return legacyKey;
-      }
-      return savedConfig?.apiKey || '';
-    } catch { return savedConfig?.apiKey || ''; }
+      return sessionStorage.getItem('toeic_ai_session_key') || '';
+    } catch { return ''; }
   });
   const [showApiKey, setShowApiKey] = useState(false);
 
@@ -182,10 +194,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
         providerId,
         modelId,
         apiUrl: finalApiUrl,
-        apiKey: '',
       }));
-      // Known limitation: API keys use sessionStorage (cleared when browser closes).
-      // Not truly secure — a local-only app trade-off for now.
       sessionStorage.setItem(`toeic_api_key_${providerId}`, apiKey);
       sessionStorage.setItem('toeic_ai_session_key', apiKey);
     } catch { /* ignore */ }
