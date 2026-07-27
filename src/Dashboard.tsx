@@ -119,9 +119,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onStart }) => {
 
   // Default models per provider
   const defaultModels: Record<string, string> = {
-    nvidia: 'nvidia/nemotron-3-super-120b',
+    nvidia: 'nvidia/nemotron-3-super-120b-a12b',
     openrouter: 'nvidia/nemotron-3-super-120b-a12b:free',
-    groq: 'llama-3.2-90b-vision-preview',
+    groq: 'openai/gpt-oss-120b',
     anthropic: 'claude-3-5-sonnet-20241022',
     google: 'gemini-2.5-flash',
     azure: 'gpt-4o',
