@@ -13,13 +13,13 @@ export const QuestionSchema = z.object({
   id: z.number(),
   part: z.number().min(1).max(7),
   type: z.enum(['listening', 'reading']),
-  image: z.string().default(''),
-  transcript: z.string().default(''),
-  passage: z.string().default(''),
+  image: z.string(),
+  transcript: z.string(),
+  passage: z.string(),
   question: z.string(),
   options: z.array(z.string()).length(4),
   answer: z.enum(['A', 'B', 'C', 'D']),
-  audio: z.string().default(''),
+  audio: z.string(),
 });
 
 export const ExamSchema = z.object({
