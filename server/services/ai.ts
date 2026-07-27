@@ -958,6 +958,7 @@ export async function generateWithFallback(
       const providerFactory = createLanguageModel(entry.id, entry.apiKey, entry.baseURL);
       const model = providerFactory(entry.model);
       const result = await generateObject({
+        mode: "json",
         model,
         schema,
         prompt,
