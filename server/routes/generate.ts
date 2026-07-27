@@ -29,7 +29,7 @@ import { persistSessionStatus } from '../app.js';
 const router = Router();
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_MAX = parseInt(process.env.GENERATE_RATE_LIMIT_MAX || '', 10) || 60;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 
 function checkRateLimit(ip: string): boolean {

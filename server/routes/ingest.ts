@@ -12,7 +12,7 @@ export function createIngestRouter(uploadDir: string): Router {
 
   // Rate limiter: max 5 requests per minute per IP (same as /api/generate)
   const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-  const RATE_LIMIT_MAX = 5;
+  const RATE_LIMIT_MAX = parseInt(process.env.INGEST_RATE_LIMIT_MAX || '', 10) || 60;
   const RATE_LIMIT_WINDOW_MS = 60_000;
 
   function ingestRateLimit(req: Request, res: Response, next: NextFunction) {
