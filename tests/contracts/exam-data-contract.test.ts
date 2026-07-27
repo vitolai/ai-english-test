@@ -59,7 +59,12 @@ async function fetchExamData(sessionId: string) {
   return res.json();
 }
 
+const seedTextCache = new Map<string, string>();
+
 async function ingestWebSeedText(url: string): Promise<string> {
+  const cached = seedTextCache.get(`web:${url}`);
+  if (cached) return cached;
+
   const res = await fetch(`${BASE_URL}/api/ingest/web`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -67,10 +72,14 @@ async function ingestWebSeedText(url: string): Promise<string> {
   });
   expect(res.status).toBe(200);
   const body = (await res.json()) as { text: string };
+  seedTextCache.set(`web:${url}`, body.text);
   return body.text;
 }
 
 async function ingestPdfSeedText(): Promise<string> {
+  const cached = seedTextCache.get('pdf:sample');
+  if (cached) return cached;
+
   const pdfPath = path.resolve(__dirname, '../../test-assets/sample.pdf');
   if (!fs.existsSync(pdfPath)) return 'Default PDF seed text for testing.';
 
@@ -85,6 +94,7 @@ async function ingestPdfSeedText(): Promise<string> {
   });
   expect(res.status).toBe(200);
   const body = (await res.json()) as { text: string };
+  seedTextCache.set('pdf:sample', body.text);
   return body.text;
 }
 

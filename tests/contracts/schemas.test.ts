@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { QuestionSchema, ExamDataSchema } from "../contracts/exam.schema"';
-import type { Question, ExamData } from "../contracts/exam.schema"';
+import { QuestionSchema, ExamDataSchema } from "./exam.schema";
+import type { Question, ExamData } from "./exam.schema";
 
 describe('Contract Tests — Zod Schemas', () => {
   describe('QuestionSchema', () => {
