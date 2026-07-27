@@ -1,6 +1,5 @@
 import { generateObject } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
-import { createGroq } from '@ai-sdk/groq';
 import { z } from 'zod';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -931,8 +930,7 @@ export interface ProviderEntry {
 
 export function createLanguageModel(providerId: string, apiKey: string, baseURL?: string): ModelFactory {
   if (providerId === 'groq') {
-    const groq = createGroq({ apiKey });
-    return groq;
+    return createOpenAI({ apiKey, baseURL: 'https://api.groq.com/openai/v1', name: 'groq' });
   }
 
   return createOpenAI({
