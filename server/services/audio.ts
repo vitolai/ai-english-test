@@ -22,9 +22,18 @@ export async function generateAudio(jsonPath: string, audioDir: string): Promise
         const mp3Name = path.basename(q.audio);
         const mp3Path = path.join(audioDir, mp3Name);
         if (!fs.existsSync(mp3Path)) {
-          const warn = `Missing audio file for question ${q.id}: ${mp3Name}`;
-          console.warn('[Audio]', warn);
-          return { success: false, error: warn };
+          // Retry once for this specific file
+          console.warn(`[Audio] Retrying missing file for question ${q.id}: ${mp3Name}`);
+          try {
+            await execAsync(`python3 gen_session_audio.py "${jsonPath}" "${audioDir}"`);
+          } catch { /* ignore retry error */ }
+          if (fs.existsSync(mp3Path)) {
+            console.log(`[Audio] Retry succeeded for question ${q.id}`);
+          } else {
+            // Skip this file — don't abort entire generation for one missing audio
+            console.warn(`[Audio] Skipping missing audio for question ${q.id}: ${mp3Name}`);
+            continue;
+          }
         }
       }
     }
