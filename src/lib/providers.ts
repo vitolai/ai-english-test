@@ -132,7 +132,7 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
   google: {
     id: 'google', name: 'Google Gemini',
     description: 'Gemini models direct from Google. 2M context, native multimodal, generous free tier.',
-    baseUrl: 'https://generativelanguage.googleapis.com/v1beta', authType: 'header', authHeader: 'x-goog-api-key',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', authType: 'bearer', authHeader: 'Authorization',
     defaultHeaders: { 'Content-Type': 'application/json' },
     category: 'cloud', requiresApiKey: true,
     models: [
