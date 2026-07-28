@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-TOEIC AI Pro Regression Test Runner
+AI English Test Regression Test Runner
 Usage: python3 scripts/run_regression.py [--smoke|--full|--scale N] [--real]
 
 --real (only meaningful with --scale N): use real AI via OpenRouter instead of
