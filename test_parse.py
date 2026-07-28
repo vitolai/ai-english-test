@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '/home/vlw/toeic-ai-pro-w')
+sys.path.insert(0, 'os.path.dirname(os.path.dirname(os.path.abspath(__file__)))')
 from gen_session_audio import parse_speaker_turns
 
 # Test transcript from the JSON
