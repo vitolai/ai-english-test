@@ -1,5 +1,5 @@
 // Provider Registry — Single source of truth for all AI providers
-// Used by: Frontend UI, Backend routing, Test Mock, Documentation
+// Used by: Frontend UI, Backend routing, Documentation
 // Strategy: BYOK (Bring Your Own Key) proxy — supports ANY OpenAI-compatible endpoint
 
 export interface ModelCapabilities {
