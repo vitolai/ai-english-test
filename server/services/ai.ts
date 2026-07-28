@@ -855,6 +855,8 @@ export function ensureListeningCoherence(questions: Array<Record<string, unknown
 
     return q;
   });
+
+  return result;
 }
 
 // Normalize a Part 1 image field to a bare, valid Unsplash photo ID.
