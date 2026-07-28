@@ -100,7 +100,7 @@ def get_real_timeout(q):
         20: 600,
         50: 900,
         100: 1800,
-        200: 2400,
+        200: 3600,
     }
     if q in mapping:
         return mapping[q]

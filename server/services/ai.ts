@@ -74,46 +74,6 @@ export function ensurePart2Transcripts(questions: Array<Record<string, unknown>>
     return q;
   });
 
-  // === FINAL POST-PROCESSING: Enforce max 3 per transcript for P3 ===
-  // This runs AFTER all per-question processing to guarantee grouping
-  // regardless of what earlier steps did with transcripts.
-  let p3Idx = 0;
-  for (const q of result) {
-    if (q['part'] === 3 && q['type'] === 'listening') {
-      const convIdx = Math.floor(p3Idx / 3) % MOCK_PART3_CONVERSATIONS.length;
-      const qInGroup = p3Idx % 3;
-      const mockConv = MOCK_PART3_CONVERSATIONS[convIdx];
-      if (qInGroup < mockConv.questions.length) {
-        const mockQ = mockConv.questions[qInGroup];
-        q['transcript'] = mockConv.transcript;
-        q['question'] = mockQ.question;
-        const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
-        q['options'] = shuffled.options;
-        q['answer'] = shuffled.answer;
-      }
-      p3Idx++;
-    }
-  }
-
-  // Same for P4 — enforce max 3 per talk transcript
-  let p4Idx = 0;
-  for (const q of result) {
-    if (q['part'] === 4 && q['type'] === 'listening') {
-      const talkIdx = Math.floor(p4Idx / 3) % MOCK_PART4_TALKS.length;
-      const qInGroup = p4Idx % 3;
-      const mockTalk = MOCK_PART4_TALKS[talkIdx];
-      if (qInGroup < mockTalk.questions.length) {
-        const mockQ = mockTalk.questions[qInGroup];
-        q['transcript'] = mockTalk.transcript;
-        q['question'] = mockQ.question;
-        const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
-        q['options'] = shuffled.options;
-        q['answer'] = shuffled.answer;
-      }
-      p4Idx++;
-    }
-  }
-
   return result;
 }
 
@@ -2707,6 +2667,47 @@ const MOCK_PART3_CONVERSATIONS: { transcript: string; questions: { question: str
     ],
   },
 ];
+
+// === POST-PROCESSING: Enforce max 3 per transcript for P3/P4 ===
+// Runs as a standalone function AFTER all mock data is defined.
+export function enforceP3P4Grouping(questions: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+  const result = [...questions];
+  let p3Idx = 0;
+  for (const q of result) {
+    if (q['part'] === 3 && q['type'] === 'listening') {
+      const convIdx = Math.floor(p3Idx / 3) % MOCK_PART3_CONVERSATIONS.length;
+      const qInGroup = p3Idx % 3;
+      const mockConv = MOCK_PART3_CONVERSATIONS[convIdx];
+      if (qInGroup < mockConv.questions.length) {
+        const mockQ = mockConv.questions[qInGroup];
+        q['transcript'] = mockConv.transcript;
+        q['question'] = mockQ.question;
+        const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
+        q['options'] = shuffled.options;
+        q['answer'] = shuffled.answer;
+      }
+      p3Idx++;
+    }
+  }
+  let p4Idx = 0;
+  for (const q of result) {
+    if (q['part'] === 4 && q['type'] === 'listening') {
+      const talkIdx = Math.floor(p4Idx / 3) % MOCK_PART4_TALKS.length;
+      const qInGroup = p4Idx % 3;
+      const mockTalk = MOCK_PART4_TALKS[talkIdx];
+      if (qInGroup < mockTalk.questions.length) {
+        const mockQ = mockTalk.questions[qInGroup];
+        q['transcript'] = mockTalk.transcript;
+        q['question'] = mockQ.question;
+        const shuffled = shuffleOptionsWithAnswer([...mockQ.options], mockQ.answer);
+        q['options'] = shuffled.options;
+        q['answer'] = shuffled.answer;
+      }
+      p4Idx++;
+    }
+  }
+  return result;
+}
 
 // FR-GEN-13: Shuffle MOCK_PART3_CONVERSATIONS options at init so answers aren't always the same position
 for (const conv of MOCK_PART3_CONVERSATIONS) {

@@ -19,6 +19,7 @@ import {
   ensurePart7Questions,
   ensureRandomModeBusiness,
   ensureListeningCoherence,
+  enforceP3P4Grouping,
   validateAndRebalanceDistribution,
   getExamTimes,
 } from '../services/ai.js';
@@ -368,6 +369,7 @@ Return ONLY valid JSON: { "questions": [...] }`;
         finalQuestions = ensurePart7Questions(finalQuestions);
         finalQuestions = ensureRandomModeBusiness(finalQuestions, sourceType);
         finalQuestions = ensureListeningCoherence(finalQuestions);
+        finalQuestions = enforceP3P4Grouping(finalQuestions);
 
         const times = getExamTimes(questionCount);
         const examData = { title: 'TOEIC Session', questions: finalQuestions, listeningTime: times.listeningTime, readingTime: times.readingTime };
