@@ -1,4 +1,4 @@
-# TOEIC AI Pro — Regression Test Checklist
+# AI English Test Practice — Regression Test Checklist
 
 **Purpose**: Run this checklist before every release/deploy to catch regressions.
 **Location**: `C:\Users\vitol\Desktop\toeic-test-scripts\REGRESSION_CHECKLIST.md`
@@ -144,7 +144,7 @@
 
 ```bash
 # 1. Quick smoke test (default scale)
-cd /home/vlw/toeic-ai-pro-w
+cd /path/to/project
 python3 scripts/run_regression.py
 
 # 2. Custom scale test (pick your scale)
