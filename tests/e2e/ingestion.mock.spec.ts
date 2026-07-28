@@ -254,7 +254,7 @@ test.describe('E2E Ingestion — Mock Mode', () => {
       await dashboard.startExamButton.click();
       await page.waitForSelector('h2:has-text("AI Configuration")');
 
-      const apiKeyInput = page.locator('input[placeholder*="API Key"], input[placeholder*="API Key"], input[placeholder*="sk-or"], input[placeholder*="gsk_"]').first();
+      const apiKeyInput = page.locator('input[placeholder*="API Key"], input[placeholder*="sk-or"], input[placeholder*="gsk_"]').first();
       await apiKeyInput.fill('');
       await dashboard.goStartButton.click();
 
