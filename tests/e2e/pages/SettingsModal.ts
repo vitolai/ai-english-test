@@ -56,9 +56,7 @@ export class SettingsModal {
     this.modelSelect = this.modal.locator('select').first();
 
     // API key — the first input whose placeholder hints at an API key
-    this.apiKeyInput = this.modal.locator(
-      'input[placeholder*="API Key"], input[placeholder*="sk-or"], input[placeholder*="gsk_"]',
-    ).first();
+    this.apiKeyInput = this.modal.locator('input[placeholder*="API Key"]').first();
 
     // Eye toggle next to API key
     this.apiKeyToggle = this.apiKeyInput.locator('..').locator('button');
@@ -76,7 +74,6 @@ export class SettingsModal {
     this.fallbackProviderButtons = this.fallbackSection.locator('.grid.grid-cols-3 button, .grid.grid-cols-2 button');
     this.fallbackModelSelect = this.fallbackSection.locator('select');
     this.fallbackApiKeyInput = this.fallbackSection.locator(
-      'input[placeholder*="API Key"], input[placeholder*="sk-or"], input[placeholder*="gsk_"]',
     ).first();
     this.fallbackApiKeyToggle = this.fallbackApiKeyInput.locator('..').locator('button');
   }
