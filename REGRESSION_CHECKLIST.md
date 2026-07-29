@@ -107,7 +107,7 @@
 | **INF-05** | node_modules owned by user | `ls -la node_modules` | ⬜ |
 | **INF-06** | edge-tts installed | `python3 -c "import edge_tts"` succeeds | ⬜ |
 | **INF-07** | Firecrawl reachable | `curl -X POST https://api.firecrawl.dev/v2/scrape ...` returns markdown | ⬜ |
-| **INF-08** | Netbird mesh connected | `netbird status` shows all peers | ⬜ |
+| **INF-08** | Network connectivity verified | `ping -c1 node` shows all peers | ⬜ |
 
 ---
 

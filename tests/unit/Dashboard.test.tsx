@@ -56,7 +56,7 @@ describe('Dashboard Component', () => {
     render(<Dashboard onStart={mockOnStart} />);
     const startButton = screen.getByText('START EXAM');
     fireEvent.click(startButton);
-    const apiKeyInput = screen.getByPlaceholderText(/openclaw gateway token/i);
+    const apiKeyInput = screen.getByPlaceholderText(/API Key/i);
     expect(apiKeyInput).toBeInTheDocument();
   });
 });

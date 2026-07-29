@@ -78,7 +78,7 @@ const allowedOrigins: string[] = [
   'http://localhost:3001',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:3001',
-  // Allow Netbird mesh IPs (100.x.x.x) for cluster testing
+  // Allow private mesh IPs for testing
 ];
 
 if (process.env.ALLOWED_ORIGINS) {
