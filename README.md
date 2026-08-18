@@ -38,6 +38,7 @@ npx vite
 ```
 
 Then open **http://localhost:5173** in your browser.
+or just try it out at https://water2018.cc/
 
 ## Trademark Disclaimer
 
