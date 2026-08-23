@@ -1,0 +1,237 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'><style>
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;line-height:1.6;color:#24292e;max-width:900px;margin:0 auto;padding:45px;background:#fff;}
+h1,h2,h3{border-bottom:1px solid #eaecef;padding-bottom:.3em;margin-top:24px;margin-bottom:16px;font-weight:600;line-height:1.25;}
+h1{font-size:1.8em;} h2{font-size:1.45em;} h3{font-size:1.2em;}
+table{border-spacing:0;border-collapse:collapse;margin:16px 0;width:100%;font-size:.9em;}
+th,td{padding:6px 13px;border:1px solid #dfe2e5;} tr:nth-child(2n){background:#f6f8fa;}
+blockquote{padding:0 1em;color:#6a737d;border-left:.25em solid #dfe2e5;margin:0 0 16px 0;}
+code{padding:.2em .4em;margin:0;font-size:85%;background:rgba(27,31,35,.05);border-radius:3px;font-family:SFMono-Regular,Consolas,monospace;}
+pre{padding:16px;overflow:auto;font-size:85%;line-height:1.45;background:#f6f8fa;border-radius:3px;}
+pre code{background:none;padding:0;}
+a{color:#0366d6;text-decoration:none;} a:hover{text-decoration:underline;}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.75em;font-weight:600;color:#fff;background:#28a745;margin-left:8px;vertical-align:middle;}
+.footer{margin-top:50px;font-size:.8em;color:#6a737d;text-align:center;border-top:1px solid #eaecef;padding-top:20px;}
+</style></head><body><h1 id="bitnet-for-ai-english-test-localembedded-feasibility-study">BitNet for ai-english-test — Local/Embedded Feasibility Study</h1>
+<p><strong>Date:</strong> 2026-08-23<br />
+<strong>Repos:</strong> <a href="https://github.com/vitolai/ai-english-test">vitolai/ai-english-test</a> (<code>~/repos/app/ai-english-test</code>) vs <a href="https://github.com/microsoft/BitNet">microsoft/BitNet</a><br />
+<strong>Question:</strong> Can BitNet act as local/embedded model for content/exam generation instead of cloud models? Which model(s) work?</p>
+<h2 id="tldr">TL;DR</h2>
+<p><strong>Yes as offline fallback, No as primary.</strong></p>
+<ul>
+<li><code>bitnet.cpp</code> exposes an OpenAI-compatible <code>/v1</code> server → plugs directly into your existing <code>custom</code> provider (<code>server/services/provider-chain.ts</code> → <code>createOpenAI({baseURL})</code> + <code>generateObject({schema: ExamSchema})</code>) with zero backend change. The PR is trivial.</li>
+<li>The <strong>only official chat model</strong> <code>BitNet-b1.58-2B-4T</code> (2.4B, 4096 ctx) is too small / context-limited / unreliable for your TOEIC structured generation (<code>ExamSchema</code>, <code>EXACTLY 13</code>, distribution). Use it only for 10–50Q offline demos.</li>
+<li><strong>Minimum viable for real TOEIC:</strong> community ternaries <code>tiiuae/Falcon3-10B-Instruct-1.58bit</code> or <code>HF1BitLLM/Llama3-8B-1.58-100B-tokens</code> (8192 ctx, instruct-tuned) on the same <code>bitnet.cpp</code> stack. They are not Microsoft-official but are the community-recommended bitnet models.</li>
+<li>Embedding models <code>BitNet-embedding-0.6B/270M</code> are <strong>not</strong> for generation — use them for future PDF RAG instead.</li>
+</ul>
+<hr />
+<h2 id="1-how-ai-english-test-generates-today">1. How ai-english-test Generates Today</h2>
+<ul>
+<li><code>server/routes/generate.ts</code>: 2-phase chunked generation <code>LISTENING_CHUNK=13</code>, <code>READING_CHUNK=13</code>, 10–200 Q per session, SSE + polling status.</li>
+<li><code>server/services/ai.ts</code>: <code>generateObject(ExamSchema)</code> with Zod <code>QuestionSchema {id, part 1-7, type, image, transcript, passage, question, options[4], answer A-D}</code>. Requires <strong>jsonMode + functionCalling</strong>, strict count (<code>Generate EXACTLY N listening/reading questions</code>), never mix types.</li>
+<li><code>server/services/distribution.ts</code> + <code>validation.ts</code>: <code>getQuestionDistribution()</code> enforces real TOEIC ratios (Listening P1 6% / P2 25% / P3 39% / P4 30%, P3/P4 multiples of 3; Reading P5 30% / P6 16% / P7 54%). <code>validateAndRebalanceDistribution()</code> + <code>enforceP3P4Grouping</code>/<code>ensurePart*</code> retry up to 5× because even cloud 70B models ignore format ~30%.</li>
+<li>Prompt per chunk: 800–1200 tokens instruction + <code>seedText</code> ≤2000 chars → needs 2.5–4k output tokens for 13 Q.</li>
+<li><code>src/lib/providers.ts</code>: BYOK proxy already supports <code>category: 'local'|'custom'</code>, <code>capabilities: {localExecution, offline, jsonMode, functionCalling}</code>, <code>baseURL: USER_PROVIDED</code>. <code>ollama</code> is the template for local. Adding <code>bitnet</code> is one entry.</li>
+</ul>
+<p><strong>Implied requirements:</strong> ≥4096 (ideally 8k) context, reliable JSON, instruction following, English business domain grounding, vision would help Part 1 photos (currently falls back to <code>PART1_DATA</code> Unsplash pool via <code>buildPart1Instruction</code>).</p>
+<hr />
+<h2 id="2-what-microsoftbitnet-actually-is">2. What microsoft/BitNet Actually Is</h2>
+<p><code>microsoft/BitNet</code> is <strong>bitnet.cpp</strong> — a llama.cpp fork with ternary kernels (<code>I2_S</code> on x86, <code>TL1/TL2</code> on ARM), not a model zoo. Benchmarks vs FP16: 1.37–6.17× speedup, 55–82% energy saving, 100B model at 5–7 tok/s on single CPU. GPU kernel available; NPU coming.</p>
+<h3 id="official-models-microsoft">Official models (Microsoft)</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Ctx</th>
+<th>HF ID</th>
+<th>Kernel</th>
+<th>Chat/SFT</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BitNet-b1.58-2B-4T</strong></td>
+<td>2.4B</td>
+<td><strong>4096</strong></td>
+<td><code>microsoft/BitNet-b1.58-2B-4T</code> / <code>-gguf</code> / <code>-bf16</code></td>
+<td>I2_S (x86), TL1 (ARM)</td>
+<td>SFT+DPO (Llama3 tokenizer, RoPE, ReLU², subln)</td>
+<td>Trained 4T tokens, MIT, 0.4 GB non-emb. <strong>Research-only disclaimer</strong> — not for commercial without testing; known election-query defects; weak non-English.</td>
+</tr>
+<tr>
+<td>BitNet-embedding-0.6B</td>
+<td>0.6B</td>
+<td>n/a</td>
+<td><code>microsoft/BitNet-embedding-0.6B</code></td>
+<td>I2_S x86 only</td>
+<td>—</td>
+<td><strong>Embedding only</strong>, 1.4–2.28× speedup. For RAG, not generation.</td>
+</tr>
+<tr>
+<td>BitNet-embedding-270M</td>
+<td>270M</td>
+<td>n/a</td>
+<td><code>microsoft/BitNet-embedding-270M</code></td>
+<td>I2_S x86 only</td>
+<td>—</td>
+<td>Same, edge RAG.</td>
+</tr>
+</tbody>
+</table>
+<p>Must use <code>bitnet.cpp</code> for speed; <code>transformers</code> path gives <strong>no</strong> speedup and is discouraged in the model card.</p>
+<h3 id="community-158-bit-models-that-run-on-bitnetcpp">Community 1.58-bit models that run on bitnet.cpp</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Params</th>
+<th>Ctx</th>
+<th>HF ID</th>
+<th>Instruct</th>
+<th>Verdict for this use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bitnet_b1_58-large</code></td>
+<td>0.7B</td>
+<td>~2048</td>
+<td><code>1bitLLM/bitnet_b1_58-large</code></td>
+<td>weak</td>
+<td>Too small — fails JSON/count. No.</td>
+</tr>
+<tr>
+<td><code>bitnet_b1_58-3B</code></td>
+<td>3.3B</td>
+<td>~2048</td>
+<td><code>1bitLLM/bitnet_b1_58-3B</code></td>
+<td>weak</td>
+<td>Marginal — still unreliable. No.</td>
+</tr>
+<tr>
+<td><strong>Llama3-8B-1.58-100B-tokens</strong></td>
+<td>8B</td>
+<td><strong>8192</strong></td>
+<td><code>HF1BitLLM/Llama3-8B-1.58-100B-tokens</code></td>
+<td>limited</td>
+<td><strong>Best community</strong> — Llama3 backbone, larger ctx. Viable fallback.</td>
+</tr>
+<tr>
+<td><strong>Falcon3-7B/10B-Instruct-1.58bit</strong></td>
+<td>7–10B</td>
+<td><strong>8192</strong></td>
+<td><code>tiiuae/Falcon3-*-Instruct-1.58bit</code></td>
+<td>✅</td>
+<td><strong>Recommended</strong> if you go bitnet — instruct-tuned, hardest to break JSON.</td>
+</tr>
+<tr>
+<td>Falcon Edge 1–3B</td>
+<td>1–3B</td>
+<td>4096</td>
+<td><code>tiiuae/falcon-edge*</code></td>
+<td>✅</td>
+<td>Light edge fallback only.</td>
+</tr>
+</tbody>
+</table>
+<p>All above are <strong>text-only, no vision</strong>. Part 1 must keep the <code>ensurePart1Images</code> fallback (already implemented).</p>
+<hr />
+<h2 id="3-gap-analysis">3. Gap Analysis</h2>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Cloud (Nemotron/Gemini)</th>
+<th>BitNet 2B-4T</th>
+<th>Falcon 10B / Llama8B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Structured JSON <code>ExamSchema</code> (generateObject)</td>
+<td>Reliable</td>
+<td><strong>Fragile</strong> — IFEval 53.5 worst in class, drops fields, miscounts <code>EXACTLY 13</code>, mixes listening/reading. Your 5× retry will still fail ~40–60% chunks.</td>
+<td>Moderate — larger, better instruction following. Still needs prompt-based <code>response_format: json_object</code> (bitnet.cpp supports it) but no native functionCalling.</td>
+</tr>
+<tr>
+<td>Context 13Q chunk</td>
+<td>128k</td>
+<td><strong>4096 = at limit</strong> — prompt ~1.5k + 13×180 ≈ 2.3k = ~3.8k. No headroom for 100–200Q prompts.</td>
+<td>8192 safe.</td>
+</tr>
+<tr>
+<td>Distribution / P3-P4 grouping</td>
+<td>Needs rebalancing</td>
+<td>Will violate constantly</td>
+<td>Better but still needs <code>validateAndRebalance</code>.</td>
+</tr>
+<tr>
+<td>Vision Part 1</td>
+<td>Yes</td>
+<td>No → keep photo-pool fallback</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Source grounding (seedText)</td>
+<td>Good</td>
+<td>Weak — model card notes bias/hallucination, limited domain</td>
+<td>Moderate</td>
+</tr>
+<tr>
+<td>Offline / embedded</td>
+<td>No (cost/latency/privacy)</td>
+<td><strong>Win</strong> — 0.8 GB RAM, 29 ms/token decode, single CPU ARM/x86, 70–82% energy saving. Ideal for local ARM/x86 hosts.</td>
+<td>2–3 GB RAM, ~3–4 tok/s CPU — still edge-capable.</td>
+</tr>
+<tr>
+<td>Legal</td>
+<td>API key</td>
+<td>MIT but commercial caution, election defects</td>
+<td>Same</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Context math matters:</strong> Your existing <code>LISTENING_CHUNK=13</code> was already tuned for 4096. BitNet 2B cannot safely increase it; Falcon/Llama can.</p>
+<hr />
+<h2 id="4-which-bitnet-models-work">4. Which BitNet Model(s) Work?</h2>
+<ul>
+<li><strong>Works embedded, degraded quality:</strong> <code>microsoft/BitNet-b1.58-2B-4T-gguf</code> (<code>i2_s</code> quant) → Tier 3 offline fallback for 10–50Q demos / random mode. Expect pass rate ~40–60% per chunk vs &gt;85% cloud; use <code>ensurePart*</code> fillers heavily.</li>
+<li><strong>Minimum viable for real TOEIC:</strong> <code>tiiuae/Falcon3-10B-Instruct-1.58bit</code> (preferred) or <code>HF1BitLLM/Llama3-8B-1.58-100B-tokens</code>. Same <code>bitnet.cpp</code> stack, 8192 ctx.</li>
+<li><strong>Do not use for generation:</strong> <code>BitNet-embedding-0.6B/270M</code>.</li>
+</ul>
+<p>No current BitNet vision model exists — don't wait for it.</p>
+<hr />
+<h2 id="5-integration-path-no-pr-needed-now-but-trivial">5. Integration Path (no PR needed now, but trivial)</h2>
+<pre><code class="language-bash"># Build once
+git clone --recursive https://github.com/microsoft/BitNet.git &amp;&amp; cd BitNet
+conda create -n bitnet-cpp python=3.10 &amp;&amp; conda activate bitnet-cpp
+pip install -r requirements.txt
+huggingface-cli download microsoft/BitNet-b1.58-2B-4T-gguf --local-dir models/BitNet-b1.58-2B-4T
+python setup_env.py -md models/BitNet-b1.58-2B-4T -q i2_s
+# or: python setup_env.py --hf-repo tiiuae/Falcon3-10B-Instruct-1.58bit -q i2_s
+
+# Serve OpenAI-compatible
+python -m llama_cpp.server --model models/BitNet-b1.58-2B-4T/ggml-model-i2_s.gguf \
+  --host 0.0.0.0 --port 8080 --ctx-size 4096
+
+# Test
+curl http://localhost:8080/v1/chat/completions -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;model&quot;:&quot;bitnet&quot;,&quot;messages&quot;:[{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;Return JSON {\&quot;questions\&quot;: []}&quot;}],&quot;response_format&quot;:{&quot;type&quot;:&quot;json_object&quot;}}'
+</code></pre>
+<p>Add to <code>src/lib/providers.ts</code>:</p>
+<pre><code class="language-ts">bitnet: { id:'bitnet', name:'BitNet Local', category:'local',
+  baseUrl:'http://localhost:8080/v1', requiresApiKey:false,
+  capabilities:{ text:true, jsonMode:true, vision:false, localExecution:true, offline:true },
+  models:[{id:'bitnet-b1.58-2b', name:'BitNet 2B (CPU)', contextWindow:4096}] }
+</code></pre>
+<p>Then <code>POST /api/generate {config:{providerId:'bitnet', baseURL:'http://localhost:8080/v1'}, model:'bitnet-b1.58-2b', apiKey:'local'}</code> flows through <code>buildProviderChain</code> → <code>createOpenAI</code> → <code>generateWithFallback</code> unchanged. Put it in <code>fallbacks[]</code> behind Nvidia/OpenRouter for auto offline failover.</p>
+<hr />
+<h2 id="6-recommendation-for-vl-stack">6. Recommendation for VL Stack</h2>
+<ul>
+<li>Keep cloud primary (Nvidia/OpenRouter/Groq).</li>
+<li>Register <strong>Falcon3-10B-1.58bit</strong> (or future official BitNet 7B+ when Microsoft releases it) as <code>custom</code> fallback.</li>
+<li>Deploy <strong>BitNet-embedding-0.6B</strong> for PDF <code>seedText</code> RAG — its intended use, 1.4–2.28× speedup.</li>
+<li>Use <strong>BitNet 2B</strong> only for local ARM demos where power/privacy &gt; quality, and keep <code>ensurePart1Images</code>/<code>ensurePart2Transcripts</code> guards on.</li>
+</ul>
+<p>Technical reports: <a href="https://arxiv.org/abs/2504.12285">BitNet b1.58 2B4T</a> • <a href="https://arxiv.org/abs/2410.16144">bitnet.cpp</a> • Demo: https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/</p><div class='footer'>Report by VLo &middot; 2026-08-23 &middot; microsoft/BitNet x vitolai/ai-english-test</div></body></html>

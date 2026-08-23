@@ -235,6 +235,18 @@ export const PROVIDERS: Record<string, ProviderConfig> = {
     capabilities: { text: true, streaming: true, vision: true, audioInput: true, audioOutput: true, functionCalling: true, jsonMode: true, reasoning: true, codeExecution: true, localExecution: false, offline: false },
   },
 
+  bitnet: {
+    id: 'bitnet', name: 'BitNet (bitnet.cpp local)',
+    description: 'Local 1.58-bit BitNet via bitnet.cpp (OpenAI-compatible at http://localhost:8080/v1). Official BitNet-b1.58-2B-4T (4096 ctx, research-only) + community Falcon3-10B / Llama3-8B 1.58bit (8192 ctx). Text-only — Part 1 vision falls back to local pool. Tier-3 offline fallback behind cloud primary.',
+    baseUrl: 'http://localhost:8080/v1', authType: 'none', category: 'local', requiresApiKey: false, userProvidesBaseUrl: true,
+    models: [
+      { id: 'bitnet-b1.58-2b', name: 'BitNet b1.58 2B-4T (4096 ctx, Tier-3 demo)', contextWindow: 4096, maxOutputTokens: 2048, capabilities: { text: true, streaming: true, vision: false, audioInput: false, audioOutput: false, functionCalling: false, jsonMode: true, reasoning: false, codeExecution: false, localExecution: true, offline: true, apiKeyRequired: false }, pricing: { inputPer1M: 0, outputPer1M: 0 }, supportsJsonMode: true, supportsFunctionCalling: false, supportsVision: false, supportsAudioInput: false, supportsAudioOutput: false, supportsReasoning: false, supportsCodeExecution: false },
+      { id: 'falcon3-10b-1.58bit', name: 'Falcon3 10B Instruct 1.58bit (8192 ctx, recommended)', contextWindow: 8192, maxOutputTokens: 4096, capabilities: { text: true, streaming: true, vision: false, audioInput: false, audioOutput: false, functionCalling: true, jsonMode: true, reasoning: true, codeExecution: false, localExecution: true, offline: true, apiKeyRequired: false }, pricing: { inputPer1M: 0, outputPer1M: 0 }, supportsJsonMode: true, supportsFunctionCalling: true, supportsVision: false, supportsAudioInput: false, supportsAudioOutput: false, supportsReasoning: true, supportsCodeExecution: false },
+      { id: 'llama3-8b-1.58bit', name: 'Llama3 8B 1.58 100B-tokens (8192 ctx)', contextWindow: 8192, maxOutputTokens: 4096, capabilities: { text: true, streaming: true, vision: false, audioInput: false, audioOutput: false, functionCalling: true, jsonMode: true, reasoning: true, codeExecution: false, localExecution: true, offline: true, apiKeyRequired: false }, pricing: { inputPer1M: 0, outputPer1M: 0 }, supportsJsonMode: true, supportsFunctionCalling: true, supportsVision: false, supportsAudioInput: false, supportsAudioOutput: false, supportsReasoning: true, supportsCodeExecution: false },
+    ],
+    capabilities: { text: true, streaming: true, vision: false, audioInput: false, audioOutput: false, functionCalling: true, jsonMode: true, reasoning: true, codeExecution: false, localExecution: true, offline: true },
+  },
+
   mock: {
     id: 'mock', name: 'Mock',
     description: 'Deterministic mock generator for testing. Triggered when API key contains "test". Zero external calls, zero cost, deterministic output.',
@@ -256,8 +268,8 @@ export type ModelId = string;
 export const PROVIDER_IDS = Object.keys(PROVIDERS);
 export const CLOUD_PROVIDERS = ['nvidia', 'anthropic', 'google', 'azure', 'groq', 'deepseek', 'cohere', 'bedrock'];
 export const AGGREGATOR_PROVIDERS = ['openrouter', 'together', 'fireworks', 'mock'];
-export const LOCAL_PROVIDERS = ['ollama', 'custom'];
-export const ALL_PROVIDERS = ['nvidia', 'openrouter', 'groq', 'anthropic', 'google', 'azure', 'together', 'fireworks', 'deepseek', 'cohere', 'bedrock', 'ollama', 'custom', 'mock'];
+export const LOCAL_PROVIDERS = ['ollama', 'custom', 'bitnet'];
+export const ALL_PROVIDERS = ['nvidia', 'openrouter', 'groq', 'anthropic', 'google', 'azure', 'together', 'fireworks', 'deepseek', 'cohere', 'bedrock', 'ollama', 'custom', 'bitnet', 'mock'];
 
 export function getProvider(id: string): ProviderConfig | undefined {
   return PROVIDERS[id];
