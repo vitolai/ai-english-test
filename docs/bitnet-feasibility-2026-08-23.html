@@ -181,7 +181,7 @@ a{color:#0366d6;text-decoration:none;} a:hover{text-decoration:underline;}
 <tr>
 <td>Offline / embedded</td>
 <td>No (cost/latency/privacy)</td>
-<td><strong>Win</strong> — 0.8 GB RAM, 29 ms/token decode, single CPU ARM/x86, 70–82% energy saving. Ideal for pi5/orcln/ec2n.</td>
+<td><strong>Win</strong> — 0.8 GB RAM, 29 ms/token decode, single CPU ARM/x86, 70–82% energy saving. Ideal for local ARM/x86 hosts.</td>
 <td>2–3 GB RAM, ~3–4 tok/s CPU — still edge-capable.</td>
 </tr>
 <tr>
@@ -232,6 +232,6 @@ curl http://localhost:8080/v1/chat/completions -H &quot;Content-Type: applicatio
 <li>Keep cloud primary (Nvidia/OpenRouter/Groq).</li>
 <li>Register <strong>Falcon3-10B-1.58bit</strong> (or future official BitNet 7B+ when Microsoft releases it) as <code>custom</code> fallback.</li>
 <li>Deploy <strong>BitNet-embedding-0.6B</strong> for PDF <code>seedText</code> RAG — its intended use, 1.4–2.28× speedup.</li>
-<li>Use <strong>BitNet 2B</strong> only for pi5/orcln ARM demos where power/privacy &gt; quality, and keep <code>ensurePart1Images</code>/<code>ensurePart2Transcripts</code> guards on.</li>
+<li>Use <strong>BitNet 2B</strong> only for local ARM demos where power/privacy &gt; quality, and keep <code>ensurePart1Images</code>/<code>ensurePart2Transcripts</code> guards on.</li>
 </ul>
 <p>Technical reports: <a href="https://arxiv.org/abs/2504.12285">BitNet b1.58 2B4T</a> • <a href="https://arxiv.org/abs/2410.16144">bitnet.cpp</a> • Demo: https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/</p><div class='footer'>Report by VLo &middot; 2026-08-23 &middot; microsoft/BitNet x vitolai/ai-english-test</div></body></html>

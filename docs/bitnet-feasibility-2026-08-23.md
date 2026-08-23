@@ -1,7 +1,7 @@
 # BitNet for ai-english-test — Local/Embedded Feasibility Study
 
 **Date:** 2026-08-23  
-**Repos:** [vitolai/ai-english-test](https://github.com/vitolai/ai-english-test) (`~/repos/app/ai-english-test`) vs [microsoft/BitNet](https://github.com/microsoft/BitNet)  
+**Repos:** [vitolai/ai-english-test](https://github.com/vitolai/ai-english-test) vs [microsoft/BitNet](https://github.com/microsoft/BitNet)  
 **Question:** Can BitNet act as local/embedded model for content/exam generation instead of cloud models? Which model(s) work?
 
 ## TL;DR
@@ -64,7 +64,7 @@ All above are **text-only, no vision**. Part 1 must keep the `ensurePart1Images`
 | Distribution / P3-P4 grouping | Needs rebalancing | Will violate constantly | Better but still needs `validateAndRebalance`. |
 | Vision Part 1 | Yes | No → keep photo-pool fallback | No |
 | Source grounding (seedText) | Good | Weak — model card notes bias/hallucination, limited domain | Moderate |
-| Offline / embedded | No (cost/latency/privacy) | **Win** — 0.8 GB RAM, 29 ms/token decode, single CPU ARM/x86, 70–82% energy saving. Ideal for pi5/orcln/ec2n. | 2–3 GB RAM, ~3–4 tok/s CPU — still edge-capable. |
+| Offline / embedded | No (cost/latency/privacy) | **Win** — 0.8 GB RAM, 29 ms/token decode, single CPU ARM/x86, 70–82% energy saving. Ideal for local ARM/x86 hosts. | 2–3 GB RAM, ~3–4 tok/s CPU — still edge-capable. |
 | Legal | API key | MIT but commercial caution, election defects | Same |
 
 **Context math matters:** Your existing `LISTENING_CHUNK=13` was already tuned for 4096. BitNet 2B cannot safely increase it; Falcon/Llama can.
@@ -119,6 +119,6 @@ Then `POST /api/generate {config:{providerId:'bitnet', baseURL:'http://localhost
 * Keep cloud primary (Nvidia/OpenRouter/Groq).
 * Register **Falcon3-10B-1.58bit** (or future official BitNet 7B+ when Microsoft releases it) as `custom` fallback.
 * Deploy **BitNet-embedding-0.6B** for PDF `seedText` RAG — its intended use, 1.4–2.28× speedup.
-* Use **BitNet 2B** only for pi5/orcln ARM demos where power/privacy > quality, and keep `ensurePart1Images`/`ensurePart2Transcripts` guards on.
+* Use **BitNet 2B** only for local ARM demos where power/privacy > quality, and keep `ensurePart1Images`/`ensurePart2Transcripts` guards on.
 
 Technical reports: [BitNet b1.58 2B4T](https://arxiv.org/abs/2504.12285) • [bitnet.cpp](https://arxiv.org/abs/2410.16144) • Demo: https://demo-bitnet-h0h8hcfqeqhrf5gf.canadacentral-01.azurewebsites.net/
