@@ -1,21 +1,64 @@
-MIT License
+AI English Test — Dual License
+Copyright (c) 2026 vitolai. All rights reserved.
 
-Copyright (c) 2026 vitolai
+This software is available under TWO options:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+================================================================
+OPTION 1: Non-Commercial Use — Free
+================================================================
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+You may use, copy, modify, and distribute this software FREE OF CHARGE
+provided ALL of the following conditions are met:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1. NON-COMMERCIAL ONLY. Your use is personal, educational, academic
+   research, or evaluation. No commercial advantage or monetary
+   compensation in connection with the use.
+
+   "Commercial" includes, without limitation:
+   - using the software in or for a business, company, or
+     revenue-generating activity
+   - offering paid courses, tutoring, training, or SaaS based on it
+   - bundling it into a product or service you sell or monetize
+     (including ads, subscriptions, or paywalls)
+   - using it for client work or internal business operations
+
+2. ATTRIBUTION. Retain this copyright and license notice in all
+   copies or substantial portions.
+
+3. NO WARRANTY. Provided "AS IS", without warranty of any kind.
+
+================================================================
+OPTION 2: Commercial Use — Requires a License
+================================================================
+
+ANY commercial use requires a separate written commercial license
+from the copyright holder.
+
+To obtain a commercial license, contact:
+  Email: vitolai@gmail.com
+  Subject: [Commercial License] AI English Test
+
+Include: your name/company, intended use, expected users/seats,
+and whether you need redistribution or SaaS rights.
+
+Commercial licensees will receive a signed LICENSE-COMMERCIAL grant.
+See LICENSE-COMMERCIAL.md for ordering details.
+
+================================================================
+IMPORTANT NOTES
+================================================================
+
+- Versions released under MIT License on or before 2026-10-10 remain
+  under MIT for those copies. This dual license applies to all versions
+  AFTER that date (v0.3.1+). The copyright holder does not revoke
+  previously granted MIT rights, as MIT is irrevocable.
+
+- If you previously obtained the software under MIT, you may continue
+  using that copy under MIT terms, but new versions, updates, and
+  features are under this dual license only.
+
+- Unauthorized commercial use is copyright infringement and will be
+  pursued.
+
+- GitHub: by forking or submitting PRs you agree your contributions
+  are under this same dual license.

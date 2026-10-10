@@ -43,3 +43,12 @@ or just try it out at https://water2018.cc/
 ## Trademark Disclaimer
 
 This project is not affiliated with, endorsed by, or sponsored by ETS (Educational Testing Service). TOEIC is a registered trademark of Educational Testing Service. This is an independent educational tool.
+
+## License
+
+Dual license — see [LICENSE](./LICENSE):
+
+- **Non-commercial use: FREE** (personal, education, academic research)
+- **Commercial use: REQUIRES a paid license** — see [LICENSE-COMMERCIAL.md](./LICENSE-COMMERCIAL.md) or email vitolai@gmail.com with subject `[Commercial License] AI English Test`.
+
+> Versions on or before 2026-10-10 were MIT. All versions after that date are dual-licensed (no longer MIT).
