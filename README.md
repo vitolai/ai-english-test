@@ -46,9 +46,9 @@ This project is not affiliated with, endorsed by, or sponsored by ETS (Education
 
 ## License
 
-Dual license — see [LICENSE](./LICENSE):
+Apache-2.0 with Commons Clause — see [LICENSE](./LICENSE):
 
-- **Non-commercial use: FREE** (personal, education, academic research)
-- **Commercial use: REQUIRES a paid license** — see [LICENSE-COMMERCIAL.md](./LICENSE-COMMERCIAL.md) or email vitolai@gmail.com with subject `[Commercial License] AI English Test`.
+- Use, modify, self-study: FREE
+- **Sell (paid product / SaaS / paid courses based on it): REQUIRES a commercial license** — see [LICENSE-COMMERCIAL.md](./LICENSE-COMMERCIAL.md) or email vitolai@gmail.com with subject `[Commercial License] AI English Test`.
 
-> Versions on or before 2026-10-10 were MIT. All versions after that date are dual-licensed (no longer MIT).
+> Versions on or before 2026-10-10 were MIT. All versions after that date are Apache-2.0 + Commons Clause.
